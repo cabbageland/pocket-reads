@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pocket Reads</title>
+  <meta name="description" content="Static paper-note library for Pocket Reads." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Pocket Reads" />
+  <meta name="theme-color" content="#12314d" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/icon-180.png" />
+  <link rel="manifest" href="./site.webmanifest" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="page-stamp" aria-hidden="true"></div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-copy">
+        <p class="eyebrow">cabbageland/pocket-reads</p>
+        <h1 class="site-title"><span class="title-gradient">Pocket Reads</span></h1>
+        <p class="topbar-subtitle">A static GitHub Pages-style shelf for rendered paper cards and full markdown reading notes.</p>
+      </div>
+      <div class="topbar-actions">
+        <a class="button ghost source-pill" href="https://github.com/cabbageland/pocket-reads" target="_blank" rel="noreferrer">source repo</a>
+      </div>
+    </header>
+
+    <section class="hero" id="hero"></section>
+
+    <nav class="tabs">
+      <button class="tab active" data-view="overview" type="button">Overview</button>
+      <button class="tab" data-view="notes" type="button">Paper notes</button>
+    </nav>
+
+    <section class="controls">
+      <input id="searchInput" type="search" placeholder="Search titles, tags, verdicts, venues, or note text..." />
+      <select id="verdictFilter">
+        <option value="">All verdicts</option>
+      </select>
+    </section>
+
+    <main>
+      <section class="view view-detail" id="view-detail">
+        <article class="panel detail-panel">
+          <div class="detail-header">
+            <div>
+              <p class="detail-kicker" id="detailKicker"></p>
+              <h2 id="detailTitle"></h2>
+              <p class="detail-meta" id="detailMeta"></p>
+            </div>
+            <div class="detail-actions">
+              <button class="button ghost source-pill" id="detailBackButton" type="button">← back</button>
+              <a class="button ghost source-pill" id="detailSourceLink" target="_blank" rel="noreferrer">open on GitHub</a>
+            </div>
+          </div>
+          <article class="markdown-body" id="detailBody"></article>
+        </article>
+      </section>
+
+      <section class="view active" id="view-overview">
+        <div class="stats" id="stats"></div>
+        <div class="grid two">
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Latest note</h2>
+              <span id="latestNoteDate" class="muted"></span>
+            </div>
+            <div id="latestNote"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head">
+              <h2>Recent picks</h2>
+            </div>
+            <div id="recentPicks" class="stack"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="view" id="view-notes">
+        <div id="notesList" class="card-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <template id="noteCardTemplate">
+    <article class="card note-card">
+      <div class="card-meta-row">
+        <a class="chip verdict" target="_blank" rel="noreferrer"></a>
+        <a class="chip venue" target="_blank" rel="noreferrer"></a>
+        <span class="chip tag-count"></span>
+      </div>
+      <h3></h3>
+      <p class="why"></p>
+      <p class="overview"></p>
+      <p class="why-matters"></p>
+      <div class="tag-row"></div>
+      <div class="link-row">
+        <a class="paper-link" target="_blank" rel="noreferrer">paper</a>
+        <a class="md-link" target="_blank" rel="noreferrer">note markdown</a>
+      </div>
+    </article>
+  </template>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="./app.js" type="module"></script>
+</body>
+</html>

@@ -82,6 +82,23 @@ def parse_note(path: Path) -> dict[str, object]:
     full_text = read_text(path)
     meta, body = split_front_matter(full_text)
     lines = [line for line in body.splitlines() if line.strip()]
+
+    def basic_info_value(label: str) -> str:
+        pattern = rf"^\* {re.escape(label)}:\s*(.+)$"
+        match = re.search(pattern, body, flags=re.M)
+        return clean_md(match.group(1).strip()) if match else ""
+
+    def quick_verdict_parts() -> tuple[str, str]:
+        quick = extract_section(body, "Quick verdict")
+        if not quick:
+            return "", ""
+        verdict_lines = [line.strip() for line in quick.splitlines() if line.strip()]
+        verdict = ""
+        if verdict_lines:
+            verdict = clean_md(verdict_lines[0]).strip()
+        quick_text = clean_md("\n".join(verdict_lines[1:]).strip())
+        return verdict, quick_text
+
     if meta.get("title"):
         title = clean_md(meta["title"])
     elif lines:
@@ -89,23 +106,39 @@ def parse_note(path: Path) -> dict[str, object]:
     else:
         title = path.stem.replace("-", " ").title()
 
-    summary = meta.get("summary") or clean_md(first_paragraph(extract_section(body, "Summary") or body))
-    why_it_matters = meta.get("why_it_matters") or clean_md(first_paragraph(extract_section(body, "Why It Matters")))
-    final_decision = meta.get("final_decision") or clean_md(first_paragraph(extract_section(body, "Final Decision")))
+    verdict, verdict_text = quick_verdict_parts()
+    summary = meta.get("summary") or clean_md(first_paragraph(extract_section(body, "One-paragraph overview") or extract_section(body, "Summary") or body))
+    why_it_matters = meta.get("why_it_matters") or clean_md(first_paragraph(
+        extract_section(body, "Why It Matters")
+        or extract_section(body, "12. Why does this matter?")
+        or extract_section(body, "12. Why does this matter for cabbageland?")
+    ))
+    final_decision = meta.get("final_decision") or clean_md(first_paragraph(
+        extract_section(body, "Final Decision")
+        or extract_section(body, "14. Final decision")
+    ))
+
+    authors = clean_md(meta.get("authors", "") or basic_info_value("Authors"))
+    year = clean_md(meta.get("year", "") or basic_info_value("Year"))
+    venue = clean_md(meta.get("venue", "") or basic_info_value("Venue / source"))
+    date_read = clean_md(meta.get("date_read", "") or basic_info_value("Date read"))
+    paper_url = clean_md(meta.get("paper_url", "") or basic_info_value("Link"))
+    why_selected = clean_md(meta.get("why_selected", "") or basic_info_value("Why selected in one sentence"))
 
     slug = meta.get("slug") or slugify(path.stem)
     return {
         "slug": slug,
         "title": title,
-        "authors": clean_md(meta.get("authors", "")),
-        "year": clean_md(meta.get("year", "")),
-        "venue": clean_md(meta.get("venue", "")),
-        "dateRead": clean_md(meta.get("date_read", "")),
-        "paperUrl": clean_md(meta.get("paper_url", "")),
+        "authors": authors,
+        "year": year,
+        "venue": venue,
+        "dateRead": date_read,
+        "paperUrl": paper_url,
         "pdfUrl": clean_md(meta.get("pdf_url", "")),
-        "verdict": clean_md(meta.get("verdict", "")),
+        "verdict": clean_md(meta.get("verdict", "") or verdict),
+        "verdictText": verdict_text,
         "tags": [clean_md(item) for item in list_field(meta.get("tags", ""))],
-        "whySelected": clean_md(meta.get("why_selected", "")),
+        "whySelected": why_selected,
         "summary": summary,
         "whyItMatters": why_it_matters,
         "finalDecision": final_decision,

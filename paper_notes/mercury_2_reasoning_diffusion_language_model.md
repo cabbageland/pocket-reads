@@ -16,60 +16,60 @@
 
 * Skimmable
 
-I could only recover partial public context for this item through secondary search snippets rather than a stable technical paper. The recoverable claim is that Mercury 2 is a reasoning-oriented diffusion language model positioned as faster or cheaper than standard autoregressive LLMs. Without a technical report that pins down training, decoding, and evaluation, this stays in the "interesting product signal, weak research artifact" bucket.
+This is still not a paper note. But after re-reading the primary company material, it is a better product note than before. Inception is explicit that Mercury 2 is a diffusion-based reasoning LLM optimized for latency-sensitive agentic workloads, with parallel refinement instead of left-to-right token decoding, 128K context, native tool use, schema-constrained JSON output, and a serving claim of 1,009 tokens/sec on NVIDIA Blackwell GPUs. I could not access a readable technical report from the linked artifact, so the mechanism below is based on primary product documentation rather than a full research paper.
 
 ## One-paragraph overview
 
-Mercury 2 appears to be a language model system built around diffusion-style generation rather than strict left-to-right autoregression. The pitch is that diffusion can support competitive reasoning quality while improving latency or throughput tradeoffs. That could matter if the implementation really avoids the usual diffusion tax. But from the material I could access, the object here is mainly a product announcement and public positioning exercise, not a paper with enough detail to audit the mechanism carefully.
+Mercury 2 is Inception Labs' production-facing argument that diffusion language models can win on speed where agent loops and interactive systems actually feel latency. The company says Mercury 2 generates by parallel refinement over a small number of denoising-style steps rather than sequential next-token decoding, and positions the model for coding, agentic loops, real-time voice, and search/RAG workloads. The concrete public claims are not just branding adjectives: 1,009 tokens/sec on Blackwell GPUs, 128K context, OpenAI-compatible API surface, native tool use, schema-aligned JSON output, and tunable reasoning. What is still missing is the part that would make this a real canonical paper note: a readable technical report with training details, architecture specifics, and evaluation methodology that can be audited independently of the launch post.
 
 ## Model definition
 
 ### Inputs
-Natural-language prompts and whatever internal conditioning the model uses for iterative denoising-style text generation. The accessible public material did not expose the exact token/state interface.
+Natural-language prompts, optional tool/schema constraints in product use, and whatever internal latent/token state the diffusion refinement process operates on. The public product page does not expose the exact representation.
 
 ### Outputs
-Text outputs intended to solve reasoning-heavy tasks.
+Reasoning-oriented text responses, code/editing outputs, JSON-constrained structured outputs, and tool-calling behavior in the API product.
 
 ### Training objective (loss)
-Not recoverable from the accessible material. If this is truly a diffusion language model, some denoising-style objective is likely involved, but I could not verify the exact formulation.
+Not recoverable from the primary product page. The company describes generation as parallel refinement over a small number of steps, which implies a denoising-style objective or schedule, but I could not verify the exact formulation from a technical report.
 
 ### Architecture / parameterization
-Only the high-level characterization was recoverable: a diffusion-style reasoning language model. I could not verify backbone family, parameter count, or decoding procedure from primary technical documentation.
+The recoverable architecture claim is high-level but concrete enough to state: Mercury 2 is a diffusion-style language model that generates multiple tokens in parallel and converges through iterative refinement rather than pure autoregressive decoding. Parameter count, backbone family, scheduler details, and training recipe remain undisclosed in the material I could access.
 
 ## Key questions this summary must address
 
 ### 1. What problem is the paper trying to solve?
-The implied target is the usual one: keep strong language-model reasoning while improving efficiency or controllability beyond autoregressive decoding.
+The product is trying to break the latency ceiling imposed by autoregressive decoding, especially in agentic systems where many inference calls compound into bad end-to-end delay.
 
 ### 2. What is the method?
-Use a diffusion-style text generation process instead of pure next-token prediction. Beyond that, the public technical specifics were not available to me.
+Use diffusion-style parallel refinement for text generation instead of left-to-right next-token decoding. The company framing is "less typewriter, more editor revising a full draft at once." Publicly, that is the mechanism they are willing to stand behind.
 
 ### 3. What is the method motivation?
-Autoregressive decoding is serial and expensive. Diffusion advocates keep arguing that alternative generation dynamics can shift that tradeoff.
+Autoregressive models are fundamentally serial, which is a bad fit for production loops, interactive coding, and voice systems where p95 latency matters as much as quality.
 
 ### 4. What data does it use?
-Unknown from the accessible sources.
+Unknown from the primary public material.
 
 ### 5. How is it evaluated?
-Public snippets talk about speed and reasoning performance, but I did not have a trustworthy evaluation document.
+Mostly through launch-style product claims: token throughput, latency positioning, and competitiveness against other speed-optimized reasoning models. I did not recover a paper-grade evaluation protocol.
 
 ### 6. What are the main results?
-I am not going to repeat unverified benchmark claims here. The only safe statement is that the release was positioned as a strong efficiency/performance point for diffusion LMs.
+The public result claims I am comfortable retaining are the ones stated directly on the launch post: 1,009 tokens/sec on Blackwell GPUs, pricing at $0.25 / 1M input tokens and $0.75 / 1M output tokens, and deployment-oriented features like 128K context and native tool use. I am not treating broader quality comparisons as canonical until a technical report is auditable.
 
 ### 7. What is actually novel?
-If the system is real and technically sound, the novelty would be deployment-grade diffusion language modeling rather than another toy demonstration.
+If the claims hold up, the novelty is not "diffusion LM" in the abstract. It is a production-grade diffusion LM with latency characteristics strong enough to matter in real systems.
 
 ### 8. What are the strengths?
-It is directionally useful as evidence that major groups still see room beyond autoregression.
+Primary-source clarity about the product target, concrete serving claims, and a focus on workloads where latency actually changes system design rather than only leaderboard aesthetics.
 
 ### 9. What are the weaknesses, limitations, or red flags?
-The access here was partial, product-facing, and light on mechanism. That is a serious limitation.
+This is still product-facing, not paper-grade. Missing architecture detail, training data, eval protocol, and independent benchmarking keep it out of the repo's top tier of trustworthy technical references.
 
 ### 10. What challenges or open problems remain?
-Proving actual reasoning quality, making diffusion text generation efficient enough in practice, and publishing convincing ablations.
+Publishing an auditable technical report, showing that diffusion reasoning quality really holds under broad evaluation, and explaining where the latency gains come from at the systems level.
 
 ### 11. What future work naturally follows?
-A proper technical report, open evaluations against strong AR baselines, and clearer analysis of latency-quality tradeoffs.
+A real paper, reproducible evals against strong autoregressive baselines, and more transparent ablations on diffusion steps versus latency and quality.
 
 ### 12. Why does this matter?
 Because if diffusion LMs ever become practical, they could reopen design space that most labs have effectively abandoned.
@@ -78,4 +78,4 @@ Because if diffusion LMs ever become practical, they could reopen design space t
 Mostly the research question rather than the artifact: keep testing alternatives to left-to-right decoding, but demand real systems evidence.
 
 ### 14. Final decision
-Do not preserve this as a technical reference yet. Preserve it only as a watchlist item until a paper or detailed report exists.
+Keep only as a source-backed product note. Do not treat it as a canonical paper reference unless a readable technical report becomes available.

@@ -13,13 +13,13 @@
 
 ## Quick verdict
 
-* Useful
+* Useful, but unfinished
 
-This is a smart bridge paper: use sensing gloves to capture information normal RGB video misses, then render back into a bare-hand visual domain that downstream models actually want. The mechanism is more interesting than the headline. I only had abstract-level access, so I am not claiming detailed benchmark literacy.
+This is still worth keeping, but it is not finished to repo standard yet because I could not recover readable full-paper text beyond the abstract-level artifact and project snippets. The core idea remains good: treat sensing gloves as privileged capture hardware, then synthesize back into a bare-hand visual domain that ordinary HOI models can use. But the old note overstated how deeply this had been read.
 
 ## One-paragraph overview
 
-Glove2Hand uses multi-modal sensing gloves as the capture interface for hand-object interaction, then synthesizes photorealistic bare-hand videos that preserve the underlying interaction dynamics. The pipeline combines a temporally consistent 3D Gaussian hand model with a diffusion-based hand restorer that blends the reconstructed hand into the observed scene. On top of that, the authors build HandSense, a glove-to-hand dataset with synchronized tactile and IMU signals, and argue that this synthetic-to-bare-hand conversion improves downstream tasks such as hand tracking and contact estimation under severe occlusion.
+Glove2Hand uses multi-modal sensing gloves as the capture interface for hand-object interaction, then synthesizes photorealistic bare-hand videos that preserve the recorded interaction dynamics. From the accessible primary material, the pipeline has two main stages: a temporally consistent 3D Gaussian hand representation that reconstructs the glove-captured interaction geometry, and a diffusion-based hand restoration stage that inserts a realistic bare hand back into the scene. The paper also introduces HandSense, a glove-to-hand dataset with synchronized tactile and IMU signals. The intended payoff is that privileged glove sensing solves the hardest occlusion and contact-visibility problems during capture, while the final output remains in the bare-hand visual domain that downstream vision systems actually want.
 
 ## Model definition
 
@@ -30,10 +30,10 @@ Glove-captured hand-object interaction video plus synchronized multi-modal glove
 Photorealistic bare-hand interaction video that preserves the captured interaction dynamics, along with data suitable for downstream HOI learning.
 
 ### Training objective (loss)
-The accessible abstract confirms a 3D Gaussian hand model and a diffusion-based restoration stage, but it does not expose the exact reconstruction, perceptual, temporal, or diffusion losses.
+I could verify the two-stage pipeline from the accessible paper artifact, but not the exact loss breakdown. This note should therefore be treated as partial-access honest: mechanism shape is known, detailed objective accounting is not.
 
 ### Architecture / parameterization
-A 3D Gaussian hand model for temporally stable hand representation plus a diffusion-based hand restorer for realistic in-scene synthesis.
+A temporally stable 3D Gaussian hand model followed by a diffusion-based hand restorer that maps from glove-observed interaction capture back to a photorealistic bare-hand scene.
 
 ## Key questions this summary must address
 
@@ -50,10 +50,10 @@ The glove has the information you want, but the visual domain you need for downs
 A new dataset called HandSense with glove-to-hand videos and synchronized tactile / IMU signals.
 
 ### 5. How is it evaluated?
-On the synthesis task itself and on downstream bare-hand applications like contact estimation and hand tracking under occlusion.
+On both synthesis fidelity and downstream bare-hand HOI tasks such as hand tracking and contact estimation under occlusion. I could verify those task categories, but not the full benchmark protocol.
 
 ### 6. What are the main results?
-The paper claims HandSense and the Glove2Hand pipeline improve downstream HOI tasks, especially under occlusion. I did not verify exact margins.
+The primary claim is that Glove2Hand produces useful bare-hand interaction data from glove-captured sequences and improves downstream HOI tasks, especially in cases where occlusion makes ordinary visual supervision weak. Exact margins remain unverified in this note because full table access was not available.
 
 ### 7. What is actually novel?
 Treating glove sensing as privileged supervision that gets translated back into a bare-hand visual domain.
@@ -62,7 +62,7 @@ Treating glove sensing as privileged supervision that gets translated back into 
 The problem setup is practical, the representation choice is concrete, and the downstream use case is clear.
 
 ### 9. What are the weaknesses, limitations, or red flags?
-Domain transfer could still leak artifacts. The quality of glove-to-hand synthesis may cap downstream usefulness.
+The biggest limitation is still access: until I can read the full paper text, this note should not be treated as fully resolved. Methodologically, domain-transfer artifacts, glove-specific capture bias, and restoration errors around contact regions are the obvious risks.
 
 ### 10. What challenges or open problems remain?
 Better object interaction realism, stronger hand-object contact supervision, and broader generalization beyond the capture setup.
@@ -77,4 +77,4 @@ Because HOI data collection is limited by occlusion exactly where interaction ma
 Capture in a privileged sensor domain, then render into the downstream training domain you actually need.
 
 ### 14. Final decision
-Keep as a useful data-and-representation paper.
+Keep, but mark mentally as not yet fully deep-read. Revisit once a reliably readable full paper source is available.

@@ -3,9 +3,9 @@
 ## Basic info
 
 * Title: XLeRobot: Practical Dual-Arm Mobile Home Robot
-* Authors: Vector Wang and collaborators (project-level attribution)
-* Year: 2026
-* Venue / source: open-source robotics project
+* Authors: Gaotian Wang, Zhuoyi Lu, Yiyang Huang, Yihao Liu
+* Year: 2025
+* Venue / source: open-source robotics project / GitHub hardware release
 * Link: https://github.com/Vector-Wangel/XLeRobot
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-24 (via Zhiwen Fan)
@@ -16,60 +16,60 @@
 
 * Useful
 
-I could not recover a paper for this item, but I could recover enough public context to treat it as a robotics project note rather than a paper note. The interesting part is not novelty. It is that an inexpensive dual-arm mobile platform with VR teleoperation can change who gets to run embodied manipulation experiments at all.
+This is not a paper, but it is a materially better project note after reading the actual repository. XLeRobot is a concrete low-cost dual-arm mobile manipulation platform built on openly documented parts, assembly guides, simulation assets, and teleoperation/control interfaces. The useful part is not novelty theater. It is that the repo is specific enough to matter: the project claims a base cost around $660, supports keyboard/Xbox/Joycon/Quest 3 VR control, exposes simulation and RL environments, and is explicitly designed as a household manipulation platform rather than a one-off lab prop.
 
 ## One-paragraph overview
 
-XLeRobot is an open-source dual-arm mobile robot platform assembled from low-cost components rather than a closed industrial stack. The public description emphasizes household-task affordances, VR control, and practical accessibility. That makes it relevant as infrastructure: a cheaper mobile manipulation platform can expand data collection, teleoperation, and replication work even if the robot itself is not a research breakthrough in algorithm design.
+XLeRobot is an open-source dual-arm mobile household robot platform oriented around low entry cost and reproducibility. The GitHub repo and docs describe a bill of materials, 3D-printable components, assembly instructions, simulation support, and multiple control modes including keyboard, Xbox controller, Joycon, and Quest 3 VR teleoperation. The stated base configuration starts around $660 before printing, tools, shipping, and tax, with optional stereo, Raspberry Pi, and RealSense upgrades. The project also ships a citation entry titled "XLeRobot: A Practical Low-cost Household Dual-Arm Mobile Robot Design for General Manipulation," which is still a repo-level release rather than a peer-reviewed paper. The right way to keep this in Pocket Reads is as primary-source infrastructure reading: what exactly is documented, what capabilities are really exposed, and whether it looks reproducible enough to support embodied AI work.
 
 ## Model definition
 
 ### Inputs
-If using the teleoperation stack, the system likely takes operator control signals, robot state, and camera observations. I did not inspect a formal technical report.
+Operator control signals from supported input devices, onboard camera observations, robot state, and whatever policy or remote-control software is connected through the stack.
 
 ### Outputs
 Robot base and arm actions for mobile manipulation tasks.
 
 ### Training objective (loss)
-No learned model could be verified from the accessible project-level material.
+There is no single learned-model contribution at the artifact level. The repo mentions RL sim-to-real deployment and VLA integration work, but XLeRobot itself is primarily a platform and control stack.
 
 ### Architecture / parameterization
-This is primarily a hardware and control project: dual arms, wheeled base, and a teleoperation / software stack.
+This is a hardware-plus-software platform: wheeled mobile base, dual arms, configurable camera stack, simulation assets, and teleoperation / autonomy interfaces built on top of other open robotics projects such as LeRobot, SO-100/SO-101, Lekiwi, and Bambot.
 
 ## Key questions this summary must address
 
 ### 1. What problem is the paper trying to solve?
-Affordable mobile manipulation platforms are scarce, which slows experimentation.
+Affordable, reproducible mobile manipulation hardware is still scarce, which blocks data collection, teleoperation experiments, and embodied learning work in small labs and individual projects.
 
 ### 2. What is the method?
-Build a low-cost dual-arm mobile robot with an open-source control stack.
+Publish a practical buildable robot platform with a documented bill of materials, assembly path, controller interfaces, simulation environment, and autonomy hooks instead of only showing a lab demo video.
 
 ### 3. What is the method motivation?
-Cheaper hardware broadens participation and iteration speed.
+If a robot is cheap enough and documented enough, more people can actually run the experiments that current embodied AI papers quietly assume access to.
 
 ### 4. What data does it use?
-Not applicable from the accessible material.
+Not applicable as a central project contribution, though the repo positions the platform as useful for future data collection and policy learning.
 
 ### 5. How is it evaluated?
-The surfaced material presents it as a working platform for household-style tasks rather than a benchmark paper.
+Primarily through demonstrations, release documentation, and the breadth of supported control / simulation workflows rather than benchmark tables. This is a project-evaluation artifact, not a paper-evaluation artifact.
 
 ### 6. What are the main results?
-The main result is existence and practicality: a dual-arm mobile robot that others can reproduce more cheaply.
+The main result is that the repo appears specific enough to reproduce: costed configurations, input-device support, simulation assets, and documented setup steps are all public. That is a stronger result than the old note implied.
 
 ### 7. What is actually novel?
-Mostly the integration and accessibility, not a new learning algorithm.
+Mostly the integration and accessibility package: low-cost hardware choices, clear documentation, and a ready-made bridge between teleoperation, simulation, and embodied learning experiments.
 
 ### 8. What are the strengths?
-Pragmatic, reproducible, and useful if the build docs and control stack are good.
+Pragmatic scope, unusually concrete documentation for a hobby-to-research robot, and a price point that materially changes who can experiment with dual-arm mobile manipulation.
 
 ### 9. What are the weaknesses, limitations, or red flags?
-Without a formal evaluation, reliability and real task performance are hard to judge.
+No paper-grade validation, unknown durability, unclear maintenance burden, and all the usual low-cost hardware caveats around calibration, mechanical repeatability, and safety.
 
 ### 10. What challenges or open problems remain?
-Durability, calibration, safety, and reproducibility across builders.
+Reproducibility across builders, long-horizon reliability, calibration tooling, safety envelopes for home use, and evidence that the platform supports nontrivial autonomous manipulation rather than mostly teleop.
 
 ### 11. What future work naturally follows?
-Use the platform for dataset collection, policy learning, and more rigorous benchmarking.
+Use the platform for standardized dataset collection, household-task benchmarks, policy-learning baselines, and clearer comparisons against pricier mobile manipulators.
 
 ### 12. Why does this matter?
 Because access to hardware is still one of the biggest hidden bottlenecks in embodied AI.

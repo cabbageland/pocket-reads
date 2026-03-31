@@ -20,49 +20,54 @@ It borrows the visual feel and note-detail presentation style from `cabbageclaw-
 
 ## Add a note
 
-Add a new markdown file under `paper_notes/`. The site expects simple front matter followed by normal markdown body content.
+Add a new markdown file under `paper_notes/` using the `i-read-something` deep-read structure.
 
-Example:
+## Workflow rules for managing this repo
 
-```md
----
-title: Example Paper Title
-authors: Jane Doe, John Smith
-year: 2026
-venue: arXiv
-date_read: 2026-03-31
-paper_url: https://arxiv.org/abs/1234.5678
-pdf_url: https://arxiv.org/pdf/1234.5678.pdf
-verdict: Must read
-tags:
-  - world models
-  - robotics
-why_selected: One sentence on why this paper made the list.
-summary: One paragraph summary used on cards and in the overview.
-why_it_matters: One paragraph on why it matters for Pocket Reads.
-final_decision: A short final judgment.
----
+1. **Canonical source must be the actual paper whenever possible.**
+   - If the surfaced link is an X post, project page, GitHub Pages site, Google Scholar citation, or other non-paper landing page, first resolve the real paper by title/authors.
+   - The main `Link:` in the note should point to the actual paper source whenever possible (arXiv, OpenReview, conference page, PDF, etc.).
+   - Keep surfaced provenance separately when useful, e.g. `Date surfaced:` or `Surfaced via:`.
 
-# Example Paper Title
+2. **Do not write canonical notes from social/media blurbs alone.**
+   - Fixing the URL is not enough.
+   - Repository-grade notes should come from an actual paper read: PDF, arXiv/OpenReview text, or equivalent paper source.
+   - If only project-page / abstract-level / social-post access exists, the note must say so explicitly.
 
-## Summary
+3. **Short/shallow notes are unfinished work.**
+   - If a note is mostly one-line answers, abstract paraphrase, or vague claims without method detail, it is not done.
+   - Deepen it from the paper before considering the repo task complete.
 
-Longer markdown content goes here.
+4. **Be honest about access.**
+   - If exact loss / architecture / dataset / results details are unclear, say so.
+   - If the real paper cannot be confidently resolved, keep the note clearly labeled as unresolved / partial-access rather than bluffing.
 
-## Why It Matters
+5. **Prefer one canonical note per paper.**
+   - Avoid duplicate `via X` variants once the real paper has been resolved.
+   - Merge provenance into the canonical note instead of keeping social-link duplicates.
 
-Why it matters goes here.
+## Note format
 
-## Final Decision
+This repo should use the same paper-note format and writing standard as `i-read-something`:
+- direct
+- skeptical
+- compact
+- mechanism-first
+- honest about uncertainty
 
-Final note goes here.
-```
+Required structure:
+- `# Title`
+- `## Basic info`
+- `## Quick verdict`
+- `## One-paragraph overview`
+- `## Model definition`
+- `## Key questions this summary must address`
 
 Notes:
 
-- front matter is parsed without external dependencies, so keep it simple
-- `tags` can be comma-separated on one line or written as `- item` lines
+- `build_content.py` parses the `i-read-something`-style markdown notes directly
 - the full markdown note is preserved in `data/content.json` and rendered in the detail view
+- surfaced provenance such as `Date surfaced` / `Surfaced via` is encouraged when helpful
 
 ## Rebuild content
 

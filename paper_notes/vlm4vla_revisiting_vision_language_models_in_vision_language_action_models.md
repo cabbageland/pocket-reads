@@ -5,8 +5,8 @@
 * Title: VLM4VLA: Revisiting Vision-Language-Models in Vision-Language-Action Models
 * Authors: Jianke Zhang, Xiaoyu Chen, Qiuyue Wang, Mingsheng Li, Yanjiang Guo, Yucheng Hu, Jiajun Zhang, Shuai Bai, Junyang Lin, Jianyu Chen
 * Year: 2026
-* Venue / source: arXiv / ICLR 2026 poster
-* Link: https://cladernyjorn.github.io/VLM4VLA.github.io/
+* Venue / source: ICLR 2026 poster / arXiv preprint
+* Link: https://arxiv.org/abs/2601.03309
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-02 (via Zhiwen Fan)
 * Why selected in one sentence: It asks a needed uncomfortable question: do stronger general VLMs actually make stronger VLA policies.

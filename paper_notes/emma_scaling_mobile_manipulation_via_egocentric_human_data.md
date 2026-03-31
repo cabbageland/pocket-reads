@@ -4,9 +4,9 @@
 
 * Title: EMMA: Scaling Mobile Manipulation via Egocentric Human Data
 * Authors: Lawrence Y. Zhu, Pranav Kuppili, Ryan Punamiya, Patcharapong Aphiwetsa, Dhruv Patel, Simar Kareer, Sehoon Ha, Danfei Xu
-* Year: 2025
-* Venue / source: arXiv / project page
-* Link: https://x.com/danfei_xu/status/2036108953017368960?s=46
+* Year: 2026
+* Venue / source: IEEE Robotics and Automation Letters 2026 / arXiv preprint
+* Link: https://arxiv.org/abs/2509.04443
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-23 (via Zhiwen Fan)
 * Why selected in one sentence: It goes after the ugly data bottleneck in mobile manipulation instead of pretending more robot teleop is a scalable answer.
@@ -15,7 +15,7 @@
 
 * Useful
 
-The design choice is strong: use egocentric human mobile-manipulation data plus static robot data to avoid depending on expensive mobile robot teleoperation. That is a real bottleneck, not an invented one. I only had project-page and search-snippet access, so I am keeping the note at the systems level.
+The design choice is strong: use egocentric human mobile-manipulation data plus static robot data to avoid depending on expensive mobile robot teleoperation. That is a real bottleneck, not an invented one. I had paper-level access, but I am still keeping the note at the systems level.
 
 ## One-paragraph overview
 

@@ -4,9 +4,9 @@
 
 * Title: Dexterous World Models
 * Authors: Byungjun Kim, Taeksoo Kim, Junyoung Lee, Hanbyul Joo
-* Year: 2025
-* Venue / source: arXiv / project page
-* Link: https://snuvclab.github.io/dwm/
+* Year: 2026
+* Venue / source: CVPR 2026 / arXiv preprint
+* Link: https://arxiv.org/abs/2512.17907
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-11 (via Zhiwen Fan)
 * Why selected in one sentence: It tries to make static digital twins actually interactive by predicting dexterous human-scene interaction instead of just rendering navigation viewpoints.
@@ -15,7 +15,7 @@
 
 * Useful
 
-This is a strong interaction-centric world-model paper. The main value is not the digital-twin framing; it is the explicit conditioning on scene renderings plus hand-action sequences to model how the scene changes under manipulation. I had abstract-level and project-level access, not a full experimental audit.
+This is a strong interaction-centric world-model paper. The main value is not the digital-twin framing; it is the explicit conditioning on scene renderings plus hand-action sequences to model how the scene changes under manipulation. I had paper-level access, but not a full experimental audit.
 
 ## One-paragraph overview
 

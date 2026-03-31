@@ -5,8 +5,8 @@
 * Title: ICLR: In-Context Imitation Learning with Visual Reasoning
 * Authors: Toan Nguyen, Weiduo Yuan, Songlin Wei, Hui Li, Daniel Seita, Yue Wang
 * Year: 2026
-* Venue / source: arXiv / project page
-* Link: https://toannguyen1904.github.io/ICLR/
+* Venue / source: arXiv
+* Link: https://arxiv.org/abs/2603.07530
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-12 (via Zhiwen Fan)
 * Why selected in one sentence: It asks a sharper question than most robot reasoning papers: can explicit visual reasoning traces improve in-context imitation rather than merely decorate it.

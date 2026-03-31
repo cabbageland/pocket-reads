@@ -1,21 +1,22 @@
-# GenReward: Goal-Driven Reward by Video Diffusion Models for Reinforcement Learning
+# Goal-Driven Reward by Video Diffusion Models for Reinforcement Learning
 
 ## Basic info
 
 * Title: Goal-Driven Reward by Video Diffusion Models for Reinforcement Learning
 * Authors: Qi Wang, Mian Wu, Yuyang Zhang, Mingqi Yuan, Wenyao Zhang, Haoxiang You, Yunbo Wang, Xin Jin, Xiaokang Yang, Wenjun Zeng
-* Year: 2025
-* Venue / source: arXiv
-* Link: https://qiwang067.github.io/genreward
+* Year: 2026
+* Venue / source: CVPR 2026 / arXiv preprint
+* Link: https://arxiv.org/abs/2512.00961
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-12 (via Li Dayou)
+* Surfaced as: GenReward project page alias
 * Why selected in one sentence: It uses a video diffusion model as a reward source, which is much more interesting than using it only for prediction or imitation.
 
 ## Quick verdict
 
 * Useful
 
-The paper is attractive because it uses generative video priors for reward construction rather than only for planning or rollouts. That is a more targeted use of world knowledge. I had abstract-level access plus secondary summaries, so the high-level mechanism is clear but the exact optimization details are not.
+The paper is attractive because it uses generative video priors for reward construction rather than only for planning or rollouts. That is a more targeted use of world knowledge. I had paper-level access, but the exact optimization details still need a closer audit than this note gives.
 
 ## One-paragraph overview
 

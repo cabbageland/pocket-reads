@@ -1,12 +1,12 @@
-# WHOLE: World-Grounded Hand-Object Learning from Egocentric Videos
+# WHOLE: World-Grounded Hand-Object Lifted from Egocentric Videos
 
 ## Basic info
 
-* Title: WHOLE: World-Grounded Hand-Object Learning from Egocentric Videos
+* Title: WHOLE: World-Grounded Hand-Object Lifted from Egocentric Videos
 * Authors: Yufei Ye, Jiaman Li, Ryan Rong, C. Karen Liu
 * Year: 2026
-* Venue / source: arXiv / project page
-* Link: https://judyye.github.io/whole-www
+* Venue / source: arXiv
+* Link: https://arxiv.org/abs/2602.22209
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-02 (via Zhiwen Fan)
 * Why selected in one sentence: It tries to jointly reconstruct hands and objects in world space instead of pretending those two problems can be solved independently without breaking interaction consistency.
@@ -15,7 +15,7 @@
 
 * Useful
 
-The main value is the joint world-space reconstruction story. Egocentric hand-object videos are exactly where separate hand and object estimators fall apart, and the paper addresses that directly. My access was abstract-level plus project-page summary.
+The main value is the joint world-space reconstruction story. Egocentric hand-object videos are exactly where separate hand and object estimators fall apart, and the paper addresses that directly. I had paper-level access, but the note remains at the mechanism level rather than a full metric audit.
 
 ## One-paragraph overview
 

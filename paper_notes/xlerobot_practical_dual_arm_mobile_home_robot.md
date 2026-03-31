@@ -6,9 +6,10 @@
 * Authors: Vector Wang and collaborators (project-level attribution)
 * Year: 2026
 * Venue / source: open-source robotics project
-* Link: https://x.com/vectorwang2/status/2036532851059908956?s=46
+* Link: https://github.com/Vector-Wangel/XLeRobot
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-24 (via Zhiwen Fan)
+* Surfaced via: https://x.com/vectorwang2/status/2036532851059908956?s=46
 * Why selected in one sentence: Even if this surfaced as a tweet, the underlying artifact appears to be an open-source low-cost mobile manipulation platform worth judging on mechanism rather than hype.
 
 ## Quick verdict

@@ -3,12 +3,13 @@
 ## Basic info
 
 * Title: Mercury 2 Reasoning Diffusion Language Model
-* Authors: Inception Labs team
+* Authors: Inception Labs
 * Year: 2026
 * Venue / source: product / company release
-* Link: https://x.com/stefanoermon/status/2038727314507530655?s=46
+* Link: https://www.inceptionlabs.ai/models
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-30 (via Zhiwen Fan)
+* Surfaced via: https://x.com/stefanoermon/status/2038727314507530655?s=46
 * Why selected in one sentence: It is a useful check on whether diffusion-style language modeling is producing a real systems advantage or just a branding cycle.
 
 ## Quick verdict

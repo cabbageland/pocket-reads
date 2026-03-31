@@ -5,8 +5,8 @@
 * Title: SimRecon: SimReady Compositional Scene Reconstruction from Real Videos
 * Authors: Chong Xia, Kai Zhu, Zizhuo Wang, Fangfu Liu, Zhizheng Zhang, Yueqi Duan
 * Year: 2026
-* Venue / source: arXiv / project page
-* Link: https://xiac20.github.io/SimRecon/
+* Venue / source: CVPR 2026 / arXiv preprint
+* Link: https://arxiv.org/abs/2603.02133
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-16 (via Zhiwen Fan)
 * Why selected in one sentence: It tries to reconstruct scenes in the object-centric form simulation actually wants rather than stopping at photogenic view synthesis.
@@ -15,7 +15,7 @@
 
 * Useful
 
-This is a solid pipeline paper with a sensible target: sim-ready scene reconstruction from cluttered real videos. The useful move is the bridging logic between stages, not the generic perception-generation-simulation slogan. Access was project-page and abstract level.
+This is a solid pipeline paper with a sensible target: sim-ready scene reconstruction from cluttered real videos. The useful move is the bridging logic between stages, not the generic perception-generation-simulation slogan. I had paper-level access, but not a full table-by-table audit.
 
 ## One-paragraph overview
 

@@ -6,7 +6,7 @@
 * Authors: Jacky Kwok, Xilun Zhang, Mengdi Xu, Yuejiang Liu, Azalia Mirhoseini, Chelsea Finn, Marco Pavone
 * Year: 2026
 * Venue / source: arXiv
-* Link: https://cover-vla.github.io/
+* Link: https://arxiv.org/abs/2602.12281
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-03 (via Zhiwen Fan)
 * Why selected in one sentence: It pushes a useful claim for robotics: spend more compute on verification at test time instead of only scaling policy pretraining.

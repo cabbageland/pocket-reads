@@ -6,7 +6,7 @@
 * Authors: Yuzhi Chen, Ronghan Chen, Dongjie Huo, Yandan Yang, Dekang Qi, Haoyun Liu, Tong Lin, Shuang Zeng, Junjin Xiao, Xinyuan Chang, Feng Xiong, Xing Wei, Zhiheng Ma, Mu Xu
 * Year: 2026
 * Venue / source: arXiv
-* Link: https://arxiv.org/pdf/2603.23376#page=6.39
+* Link: https://arxiv.org/abs/2603.23376
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-26 (via liubangya)
 * Why selected in one sentence: It is a large robot world model that treats physical plausibility as a first-class training problem rather than a side effect.

@@ -6,7 +6,7 @@
 * Authors: Jisang Han, Sunghwan Hong, Jaewoo Jung, Wooseok Jang, Honggyu An, Qianqian Wang, Seungryong Kim, Chen Feng
 * Year: 2025
 * Venue / source: arXiv
-* Link: https://x.com/zhenjun_zhao/status/2034673771567608291?s=46
+* Link: https://arxiv.org/abs/2512.04012
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-19 (via Zhiwen Fan)
 * Why selected in one sentence: It is a rare paper that asks what a feed-forward 3D reconstruction model is already implicitly doing before proposing yet another learned fix.

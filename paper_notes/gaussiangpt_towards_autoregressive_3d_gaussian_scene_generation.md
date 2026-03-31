@@ -5,8 +5,8 @@
 * Title: GaussianGPT: Towards Autoregressive 3D Gaussian Scene Generation
 * Authors: Nicolas von Luetzow, Barbara Roessle, Katharina Schmid, Matthias Niessner
 * Year: 2026
-* Venue / source: arXiv / project page
-* Link: https://nicolasvonluetzow.github.io/GaussianGPT/
+* Venue / source: arXiv
+* Link: https://arxiv.org/abs/2603.26661
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-30 (via Zhiwen Fan)
 * Why selected in one sentence: It tests whether 3D Gaussian scene generation really benefits from an autoregressive formulation instead of the current diffusion default.
@@ -15,7 +15,7 @@
 
 * Useful
 
-This is a clean counterargument to the assumption that 3D scene generation must be diffusion-first. The core idea is simple and concrete: quantize Gaussian primitives, serialize them, and let a causal transformer grow the scene token by token. I only had project-page and abstract-level access, so I trust the method sketch more than any fine-grained empirical claim.
+This is a clean counterargument to the assumption that 3D scene generation must be diffusion-first. The core idea is simple and concrete: quantize Gaussian primitives, serialize them, and let a causal transformer grow the scene token by token. I had paper-level access, but I still trust the method sketch more than any fine-grained empirical claim.
 
 ## One-paragraph overview
 

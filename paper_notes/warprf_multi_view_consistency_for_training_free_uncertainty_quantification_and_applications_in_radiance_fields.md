@@ -4,9 +4,9 @@
 
 * Title: WarpRF: Multi-View Consistency for Training-Free Uncertainty Quantification and Applications in Radiance Fields
 * Authors: Sadra Safadoust, Fabio Tosi, Fatma Guney, Matteo Poggi
-* Year: 2025
-* Venue / source: WACV 2026 / arXiv / project page
-* Link: https://kuis-ai.github.io/WarpRF/
+* Year: 2026
+* Venue / source: WACV 2026 / arXiv preprint
+* Link: https://arxiv.org/abs/2506.22433
 * Date read: 2026-03-31
 * Date surfaced: 2026-03-30 (via Zhiwen Fan)
 * Why selected in one sentence: It attacks uncertainty in radiance fields without bolting on another learned head or another round of expensive retraining.
@@ -15,7 +15,7 @@
 
 * Useful
 
-This is a pragmatic paper. Instead of pretending uncertainty needs another bespoke network, it reuses photometric and geometric consistency across views to estimate where the radiance field is likely wrong. The idea is modest but credible. I had project-page and abstract-level access, so I trust the mechanism more than every reported benchmark margin.
+This is a pragmatic paper. Instead of pretending uncertainty needs another bespoke network, it reuses photometric and geometric consistency across views to estimate where the radiance field is likely wrong. The idea is modest but credible. I had paper-level access, but I still trust the mechanism more than every reported benchmark margin.
 
 ## One-paragraph overview
 

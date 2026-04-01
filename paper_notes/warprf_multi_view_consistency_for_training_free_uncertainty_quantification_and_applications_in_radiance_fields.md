@@ -15,66 +15,66 @@
 
 * Useful
 
-This is a pragmatic paper. Instead of pretending uncertainty needs another bespoke network, it reuses photometric and geometric consistency across views to estimate where the radiance field is likely wrong. The idea is modest but credible. I had paper-level access, but I still trust the mechanism more than every reported benchmark margin.
+This is still a pragmatic paper, but the mechanism is sharper than the old note. WarpRF is not just "use consistency somehow." It explicitly estimates uncertainty at an unseen viewpoint by backward-warping reliable renderings from other viewpoints and measuring their agreement with the render there. That gives it a direct path into active view selection and active mapping without retraining the underlying radiance-field model.
 
 ## One-paragraph overview
 
-WarpRF is a training-free uncertainty-estimation layer for radiance fields. The paper assumes that if a radiance field is accurate, renderings from different source views should warp back consistently into a target view. It therefore measures uncertainty by backward-warping reliable rendered views into an unseen viewpoint and checking agreement with the rendering there. This yields an uncertainty estimate that can be plugged into downstream tasks like active view selection and active mapping without retraining the base radiance-field model.
+WarpRF starts from a simple observation: if a radiance field is correct, renderings from different viewpoints should agree once you account for geometry. Instead of training a separate confidence head, the method projects reliable source-view renderings into a target unseen viewpoint through backward warping and uses photometric and geometric agreement as an uncertainty signal. Because it runs on top of an already trained radiance field, WarpRF is training-free and architecture-agnostic. The project page illustrates the core downstream loop clearly: fit an initial radiance field such as 3D Gaussian Splatting from some views, estimate uncertainty over candidate next views with WarpRF, add the most uncertain one to the training set, refit, and repeat. That same uncertainty estimate is also used for active mapping. The appeal is exactly its modesty: make the base model satisfy the consistency properties it should already satisfy, then mine those violations as uncertainty.
 
 ## Model definition
 
 ### Inputs
-Rendered images, geometry, and camera viewpoints from a trained radiance-field model, plus the target viewpoint where uncertainty is to be estimated.
+Rendered images and geometry from a trained radiance-field system, plus source and target camera viewpoints for the warping-based consistency check.
 
 ### Outputs
-A per-view or per-region uncertainty estimate for the target viewpoint, used for uncertainty quantification and downstream active-selection tasks.
+An uncertainty estimate for unseen viewpoints or regions, which can be used for uncertainty quantification, active view selection, and active mapping.
 
 ### Training objective (loss)
-There is no additional learned model in the core WarpRF module. The method is explicitly training-free after the base radiance field has been fit.
+None beyond whatever was used to train the underlying radiance field. WarpRF itself is explicitly training-free.
 
 ### Architecture / parameterization
-It is a geometric consistency framework built on backward warping across rendered viewpoints rather than a separate trainable uncertainty network.
+Not a separate network. WarpRF is a geometric wrapper around an existing radiance-field implementation that uses backward warping and multi-view consistency scoring.
 
 ## Key questions this summary must address
 
 ### 1. What problem is the paper trying to solve?
-Radiance fields usually give pretty pictures but weak calibrated uncertainty. That is a problem if you want active reconstruction or mapping rather than passive rendering demos.
+Radiance fields are increasingly used for reconstruction and mapping, but they usually provide weak or implementation-specific uncertainty estimates, which makes them less useful for active data acquisition.
 
 ### 2. What is the method?
-Project reliable source-view renderings into a target view by backward warping, compare them with the target rendering, and use the agreement level as an uncertainty signal.
+Estimate uncertainty by projecting reliable renderings from multiple views into an unseen target viewpoint and measuring how well they agree there in both photometric and geometric terms.
 
 ### 3. What is the method motivation?
-A good model should be multi-view consistent. If agreement collapses, that is evidence of uncertainty.
+A good radiance field should be multi-view consistent. If different viewpoints disagree after warping, that disagreement is exactly the kind of epistemic signal an uncertainty estimator should expose.
 
 ### 4. What data does it use?
-The accessible material did not list every dataset, but it evaluates on radiance-field reconstruction settings and downstream active-mapping / active-view-selection tasks.
+The public materials describe evaluation in radiance-field uncertainty settings plus downstream active view selection and active mapping. The project page focuses on comparisons against FisherRF in both downstream tasks.
 
 ### 5. How is it evaluated?
-Uncertainty estimation quality plus downstream active view selection and active mapping against existing baselines.
+On uncertainty quantification quality itself and on whether the uncertainty estimate actually improves the next-view choice and the resulting reconstruction in active mapping and active view selection loops.
 
 ### 6. What are the main results?
-The claimed result is that WarpRF beats specialized uncertainty baselines on both uncertainty estimation and the downstream tasks, while requiring no extra training. I did not verify the exact tables.
+The paper reports that WarpRF outperforms existing uncertainty methods tailored to specific radiance-field frameworks on uncertainty estimation and on both downstream tasks. The project page specifically visualizes active mapping and active view selection gains against FisherRF and frames WarpRF as competitive while requiring no extra training.
 
 ### 7. What is actually novel?
-Using multi-view backward warping as a general uncertainty estimator for arbitrary radiance-field systems, not just one specially trained model.
+The novelty is using multi-view consistency as a drop-in uncertainty estimator for arbitrary radiance fields, rather than baking uncertainty prediction into a particular trained architecture.
 
 ### 8. What are the strengths?
-Training-free, architecture-agnostic, and easy to justify geometrically.
+Training-free, cheap, easy to justify geometrically, and immediately useful for data acquisition loops. It is also robust conceptually because it leans on an invariant the base model should already satisfy.
 
 ### 9. What are the weaknesses, limitations, or red flags?
-It depends on the underlying renderings and geometry being good enough for consistency checks to mean something. Bad depth or occlusion handling can poison the signal.
+If the underlying geometry or visibility reasoning is poor, the uncertainty signal will inherit those errors. Occlusions, bad depth, or strong appearance changes can make disagreement ambiguous. It also depends on having enough reliable source views to warp from.
 
 ### 10. What challenges or open problems remain?
-Better uncertainty calibration under heavy occlusion, dynamic scenes, and severe appearance ambiguity.
+Uncertainty under severe occlusion, dynamic scenes, appearance changes, and non-Lambertian effects. Also, active acquisition policies may need more than a myopic next-view uncertainty score.
 
 ### 11. What future work naturally follows?
-Apply the same consistency logic to 4D radiance fields, online mapping loops, or uncertainty-aware planning.
+Extend the idea to 4D radiance fields, online mapping systems, or uncertainty-aware planning loops that trade off uncertainty reduction against task reward.
 
 ### 12. Why does this matter?
-Because uncertainty that costs no extra training is exactly the kind of thing people will actually use.
+Because uncertainty that requires no retraining is far more likely to be adopted in practice than yet another specialized uncertainty branch.
 
 ### 13. What ideas are steal-worthy?
-Derive uncertainty from invariances the base model should already satisfy instead of training another confidence head.
+Treat consistency violations as uncertainty. Wrap existing generative models with geometry-aware diagnostics before training a new auxiliary model.
 
 ### 14. Final decision
-Keep. This is a good example of squeezing more value out of an existing representation with geometry rather than more model mass.
+Keep. Good example of extracting a practically useful uncertainty signal from the structure the base model already implies.

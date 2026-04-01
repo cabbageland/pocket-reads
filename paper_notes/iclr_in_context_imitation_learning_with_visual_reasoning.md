@@ -15,66 +15,66 @@
 
 * Useful
 
-This is one of the more credible "reasoning for robot control" papers because the reasoning trace is visual and action-adjacent instead of free-form language theater. The mechanism is concrete: predict future trajectory traces in image space and use them as part of the prompt and rollout. I had more than abstract access here through indexed PDF text, though not a full line-by-line audit.
+This is a cleaner reasoning paper than most robot-reasoning work because the intermediate representation is not free-form text. It is a future robot trajectory drawn in image space. After reading the paper website and PDF text, the method is much more concrete than the old note: the model first predicts a short keypoint-style future trace, then predicts the low-level action conditioned on that trace. That makes the "reasoning" step operational instead of theatrical.
 
 ## One-paragraph overview
 
-ICLR augments in-context imitation prompts with structured visual reasoning traces that represent anticipated future robot trajectories in image space. The model is a unified autoregressive transformer that predicts both reasoning traces and low-level actions, so it learns not only what to do next but also the intermediate visual plan that leads there. The claim is that this helps when prompt demonstrations are ambiguous: the same state-action history may fit multiple intents, but the future trajectory sketch disambiguates the goal.
+ICLR studies in-context imitation learning in the setting where a robot must infer a new task from a few prompt demonstrations without weight updates. The paper argues that prompt trajectories alone often under-specify intent in cluttered or ambiguous scenes: the same early motion can be consistent with several goals. Their fix is to augment each prompt with a visual reasoning trace, represented as anticipated future gripper locations in image space, and to train one causal transformer that autoregressively predicts both the reasoning trace and the action. The trace is not hand-written natural language. It is extracted from future frames by sampling five third-view images from the current time to the end of the trajectory and using Molmo2 to localize the gripper. Multi-view images and proprioceptive state become state tokens, the trace becomes reasoning tokens, and action chunks become action tokens. At inference, the model generates the reasoning trace first, then the action, repeatedly in closed loop. The paper's claim is that this explicit image-space intent token helps generalization to unseen tasks and new object layouts better than standard in-context imitation baselines.
 
 ## Model definition
 
 ### Inputs
-Prompt demonstrations containing robot states, camera observations, low-level actions, and visual reasoning traces representing future image-space trajectories.
+Prompt demonstrations containing multi-view images, proprioceptive robot state, low-level actions, and visual reasoning traces; plus the current rollout observation at inference time.
 
 ### Outputs
-Generated visual reasoning traces for the target rollout and low-level robot actions.
+A generated visual reasoning trace for the next step and the corresponding low-level robot action.
 
 ### Training objective (loss)
-The accessible paper text supports joint autoregressive learning of reasoning traces and actions, but I did not inspect the exact token-level objective or weighting.
+Teacher-forced autoregressive prediction over interleaved reasoning and action tokens. The model is trained to predict the next reasoning trace before the next action, so the intermediate plan is part of the supervised sequence rather than an external side channel.
 
 ### Architecture / parameterization
-A unified autoregressive transformer for in-context imitation learning that predicts both reasoning tokens and action tokens.
+A unified causal transformer with three token sources: state encoder outputs for camera and proprioceptive observations, reasoning encoder outputs for the image-space trajectory trace, and action encoder outputs for low-level control. The generation order is reasoning first, action second.
 
 ## Key questions this summary must address
 
 ### 1. What problem is the paper trying to solve?
-In-context imitation from demonstrations can fail when state-action trajectories do not make the demonstrator's intent explicit.
+In-context imitation can adapt quickly from a few demos, but it often fails when the demonstrations do not make task intent explicit. Ambiguous scenes and multiple plausible targets make raw state-action prompting brittle.
 
 ### 2. What is the method?
-Add image-space visual reasoning traces to prompt demonstrations and jointly predict reasoning plus action with a transformer.
+Augment prompt demonstrations with structured visual reasoning traces that describe anticipated future gripper motion in the image plane, then train a transformer to jointly autoregress over reasoning and action. During deployment, the model reasons visually before acting.
 
 ### 3. What is the method motivation?
-Actions alone under-specify intent in ambiguous scenes. A future-trajectory sketch can expose that intent more directly.
+If the missing information is intent, the intermediate representation should expose intent in a form tied directly to control geometry. A future gripper path does that much more cleanly than a paragraph of text.
 
 ### 4. What data does it use?
-Simulation and real-world manipulation tasks, according to the accessible paper text.
+The paper evaluates in both simulation and real-world manipulation. The project page lists simulation benchmarks on LIBERO-Object, LIBERO-90 Kitchen, LIBERO-90 Living Room, and LIBERO-90 Study, plus real-world pick-and-place and poking tasks.
 
 ### 5. How is it evaluated?
-By success rates and generalization on unseen tasks and novel object configurations in both simulation and real-world settings.
+By success rate and generalization to unseen tasks and novel object configurations, compared against other in-context imitation learning methods. The qualitative comparisons emphasize ambiguous placements such as moving a dumpling to a red box or a tomato to a gray bowl, where the intended target needs to be inferred from prompt context.
 
 ### 6. What are the main results?
-The paper claims consistent improvements over other in-context imitation methods. I did not audit every table, but the reported direction is clear.
+The exact tables are not exposed cleanly on the project page, but the paper reports consistent gains over in-context imitation baselines in both simulation and real-world tests. The important result is not a single leaderboard number. It is that the reasoning-augmented version improves both success and generalization in precisely the ambiguous settings where plain prompt imitation should be weakest.
 
 ### 7. What is actually novel?
-Using embodied visual reasoning traces as the intermediate representation instead of text or latent-only conditioning.
+The novel part is the representation choice and the training interface. The paper does not bolt a reasoning caption onto the policy. It turns future image-space robot motion into a supervised intermediate token stream inside in-context imitation.
 
 ### 8. What are the strengths?
-The reasoning interface is structurally tied to control, and the task ambiguity story is believable.
+The reasoning signal is embodied and cheap enough to supervise from trajectory video. The architecture is conceptually clean. The method attacks a real weakness of prompt-conditioned policies instead of claiming that "reasoning" helps everywhere by magic.
 
 ### 9. What are the weaknesses, limitations, or red flags?
-It still depends on reasoning annotations or generation targets that may be expensive to define, and the real-world scaling story is still limited.
+The trace still depends on a particular task geometry and camera framing. Five sampled third-view images and a keypoint-style trajectory are a fairly specific design choice. The public materials show the method clearly, but the quantitative breakdown is lighter than I would like.
 
 ### 10. What challenges or open problems remain?
-Richer reasoning structures, more complex scenes, and less handcrafted trace design.
+Extend the trace idea to richer contact structure, object-centric intent, multi-arm tasks, or long-horizon plans that cannot be summarized well by a short 2D gripper path. Also test whether the representation survives harder camera changes and partial observability.
 
 ### 11. What future work naturally follows?
-Learn visual reasoning traces from data at scale and combine them with stronger policy backbones.
+Learn better visual traces automatically, add uncertainty over future trace branches, and combine this approach with object-centric memory or world-model predictions so the policy can reason over more than a short local path.
 
 ### 12. Why does this matter?
-Because if reasoning is going to help robots, it probably needs to look more like geometry and less like essay writing.
+Because robot reasoning only matters if it changes action selection in a legible way. This paper gives one of the more plausible examples of how to do that.
 
 ### 13. What ideas are steal-worthy?
-Use image-space future traces as a compact intent representation inside prompt-based robot learning.
+Use future image-space gripper trajectories as an intermediate supervision target. Make reasoning part of the autoregressive action sequence rather than a separate explanation channel.
 
 ### 14. Final decision
-Keep. Good paper for anyone trying to make reasoning operational in robot imitation.
+Keep. Good paper for making "reasoning" in robot imitation actually mean something.

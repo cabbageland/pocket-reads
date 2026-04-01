@@ -16,66 +16,66 @@
 
 * Useful
 
-The paper is attractive because it uses generative video priors for reward construction rather than only for planning or rollouts. That is a more targeted use of world knowledge. I had paper-level access, but the exact optimization details still need a closer audit than this note gives.
+This note is stronger now because the method is more than "use a video model as reward." GenReward explicitly splits the reward into a coarse video-level term and a fine frame-level term. The video-level reward measures latent agreement between the agent trajectory and generated goal videos, while the frame-level reward picks a goal frame with CLIP and then scores whether the current state-action pair is likely to reach that goal through a forward-backward representation. That decomposition makes the paper feel like a real reward-design proposal instead of a vague generative prior story.
 
 ## One-paragraph overview
 
-GenReward uses pretrained video diffusion models to provide goal-driven reward signals for reinforcement learning without manually engineered reward code. The method builds both a video-level reward and a frame-level reward. For video-level reward, it compares the agent trajectory with generated goal-video latents from a finetuned video model. For frame-level reward, it extracts a relevant goal frame from the generated video with CLIP and then uses a learned forward-backward representation to estimate the probability of reaching that goal state from the current state-action pair.
+GenReward tries to reduce manual reward engineering by turning pretrained video diffusion models into goal-driven reward providers for RL. The pipeline starts by finetuning an off-the-shelf video diffusion model on domain-specific data so it can generate plausible goal videos for a task. During RL, the agent receives two reward streams. First, a video-level reward compares latent representations of the agent's trajectory with the generated goal video, providing a coarse trajectory-alignment signal. Second, the method uses CLIP to pick the most relevant frame from the generated goal video as a concrete goal state, then trains a forward-backward model that estimates the probability of reaching that goal from a given state-action pair, yielding a dense frame-level reward. The paper's claim is that this combination transfers world knowledge from the video model into RL while avoiding brittle hand-coded rewards.
 
 ## Model definition
 
 ### Inputs
-Current observations or trajectory history, a desired goal specification, generated goal-video samples, and state-action pairs for the RL agent.
+Current observations or trajectory snippets from the agent, a goal specification, generated goal videos from a finetuned video diffusion model, and state-action pairs for learning the frame-level reachability reward.
 
 ### Outputs
-Reward signals at both video level and frame level, which are fed into RL training.
+Two reward signals: a video-level trajectory-alignment reward and a frame-level goal-reaching reward, both used to train the RL policy.
 
 ### Training objective (loss)
-The method uses a finetuned video diffusion model and a learned forward-backward representation. The accessible summaries mention latent similarity and goal-reaching probability, but I did not inspect the exact RL objective or weighting.
+The method combines a finetuned video diffusion model for goal-video generation with a learned forward-backward representation for estimating the probability of reaching the selected goal frame. The public paper summary does not expose the full RL weighting details, but the decomposition of the reward terms is clear.
 
 ### Architecture / parameterization
-A pretrained / finetuned video diffusion model plus a forward-backward representation model, with CLIP used for selecting a frame-level goal.
+A pretrained or finetuned video diffusion model supplies goal-video latents, CLIP selects the most relevant goal frame, and a forward-backward model turns that frame into a state-action-conditioned reachability score.
 
 ## Key questions this summary must address
 
 ### 1. What problem is the paper trying to solve?
-RL reward design is tedious, brittle, and often task-specific.
+RL reward design is tedious, fragile, and task-specific. It does not scale well across manipulation tasks or domain shifts.
 
 ### 2. What is the method?
-Generate goal videos with a video diffusion model and turn them into video-level and frame-level reward signals.
+Generate goal videos with a video diffusion model and turn them into reward through two channels: latent trajectory similarity at the video level and goal-reaching probability at the frame level.
 
 ### 3. What is the method motivation?
-Video models encode a lot of knowledge about what successful trajectories should look like; reward design can piggyback on that.
+Video models encode rich priors about successful behavior. If that prior can be converted into reward, RL can inherit goal structure without requiring a human to hand-code every success condition.
 
 ### 4. What data does it use?
-The paper reports experiments on Meta-World tasks and uses domain-specific video finetuning for the reward model.
+The paper uses domain-specific data to adapt the video diffusion model and evaluates on Meta-World manipulation tasks.
 
 ### 5. How is it evaluated?
-On various Meta-World manipulation tasks against reward baselines.
+Against reward baselines on Meta-World tasks, including standard dense-reward comparisons and domain-shift studies. The public summary also lists ablations and sensitivity analyses, which suggests the paper does more than one headline table.
 
 ### 6. What are the main results?
-The claim is competitive or superior RL performance with reduced manual reward engineering. I did not verify exact tables.
+The paper reports competitive to superior performance on Meta-World complex manipulation tasks and claims stronger robustness under domain shift, while reducing dependence on manually engineered reward functions. The summary also flags additional compute as the main cost.
 
 ### 7. What is actually novel?
-Using generated goal videos directly as a structured reward source rather than only for planning or imitation.
+Using generated goal videos as a reward source is the core novelty, but the more precise contribution is the split between coarse latent video alignment and fine-grained frame-level reachability.
 
 ### 8. What are the strengths?
-The decomposition into coarse trajectory-level and fine frame-level reward is sensible.
+The reward design is structurally sensible, the frame-level term gives a plausible dense signal, and the method uses generative models where they add the most value instead of asking them to replace control entirely.
 
 ### 9. What are the weaknesses, limitations, or red flags?
-Reward quality will depend on the video model quality, and the setup is likely computationally heavy.
+The quality of the reward is tied to the quality of the generated goals. The system is computationally heavier than standard reward shaping. The current evidence is still centered on Meta-World rather than harder long-horizon or open-world robotics settings.
 
 ### 10. What challenges or open problems remain?
-Scaling beyond simple manipulation domains and making generative rewards stable enough for harder RL settings.
+Scaling to noisier visual domains, handling multimodal goals without collapse, and keeping the reward stable when the generated goal video is imperfect or ambiguous.
 
 ### 11. What future work naturally follows?
-Use stronger video models, better goal conditioning, and broader policy-learning benchmarks.
+Use stronger video backbones, improve goal-frame selection, and push generative reward design into harder manipulation or embodied-navigation domains.
 
 ### 12. Why does this matter?
-Because reward engineering is still one of the least scalable parts of RL.
+Because reward engineering is still one of the least scalable parts of RL, and this is a credible attempt to outsource some of that work to a learned world prior.
 
 ### 13. What ideas are steal-worthy?
-Use generative models as structured reward priors, not just as simulators.
+Split generative reward into trajectory-level and state-level components. Use video generation to define what success looks like, then use a separate reachability model to make that success trainable.
 
 ### 14. Final decision
-Keep as a useful reward-modeling paper.
+Keep. Good reward-modeling paper and materially deeper than the old skim note.

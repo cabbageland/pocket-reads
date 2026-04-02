@@ -9,7 +9,7 @@
 * Link: https://doi.org/10.1016/j.jag.2024.103976
 * Preprint / accessible text: https://arxiv.org/abs/2307.07930
 * Date read: 2026-04-01
-* Why selected in one sentence: Tracy asked for a Pocket Reads note on GeoGPT with extra attention to the product/application angle, design strengths, weaknesses, and the quality of the writing and evaluation setup.
+* Why selected in one sentence: An early geospatial LLM-agent paper that is more interesting as a product/application layer over GIS workflows than as a rigorous benchmark or algorithmic contribution.
 
 ## Quick verdict
 

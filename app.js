@@ -146,8 +146,7 @@ function renderHero() {
           <ol class="hero-picks-list">
             <li>${escapeHtml(latest.verdict || 'No verdict yet')}</li>
             <li>${escapeHtml(latest.venue || 'Unknown venue')}${latest.year ? ` · ${escapeHtml(String(latest.year))}` : ''}</li>
-            <li>${escapeHtml(latest.whyItMatters || latest.summary || 'Fresh note added to Pocket Reads')}</li>
-            <li>${escapeHtml(tags.join(' · ') || 'Topics will appear here when note tags are set')}</li>
+            <li>${escapeHtml(tags.join(' · ') || 'Fresh Pocket Reads note')}</li>
           </ol>
         </div>
         <a class="hero-scroll" href="#view-overview">↓ Scroll down for the shelf</a>

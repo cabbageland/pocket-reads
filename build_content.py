@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -78,6 +79,33 @@ def list_field(raw: str) -> list[str]:
     return lines
 
 
+def git_added_timestamp(path: Path) -> str:
+    rel = path.relative_to(ROOT)
+    try:
+        out = subprocess.check_output(
+            [
+                "git",
+                "log",
+                "--diff-filter=A",
+                "--follow",
+                "--format=%aI",
+                "--",
+                str(rel),
+            ],
+            cwd=ROOT,
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip().splitlines()
+        if out:
+            return out[-1].strip()
+    except Exception:
+        pass
+    try:
+        return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).isoformat()
+    except Exception:
+        return ""
+
+
 def parse_note(path: Path) -> dict[str, object]:
     full_text = read_text(path)
     meta, body = split_front_matter(full_text)
@@ -126,6 +154,7 @@ def parse_note(path: Path) -> dict[str, object]:
     why_selected = clean_md(meta.get("why_selected", "") or basic_info_value("Why selected in one sentence"))
 
     slug = meta.get("slug") or slugify(path.stem)
+    added_at = git_added_timestamp(path)
     return {
         "slug": slug,
         "title": title,
@@ -133,6 +162,7 @@ def parse_note(path: Path) -> dict[str, object]:
         "year": year,
         "venue": venue,
         "dateRead": date_read,
+        "addedAt": added_at,
         "paperUrl": paper_url,
         "pdfUrl": clean_md(meta.get("pdf_url", "")),
         "verdict": clean_md(meta.get("verdict", "") or verdict),
@@ -149,7 +179,7 @@ def parse_note(path: Path) -> dict[str, object]:
 def main() -> None:
     notes = sorted(
         (parse_note(path) for path in NOTES_DIR.glob("*.md") if path.name != ".gitkeep"),
-        key=lambda item: (item["dateRead"] or "", item["title"]),
+        key=lambda item: (item["addedAt"] or "", item["dateRead"] or "", item["title"]),
         reverse=True,
     )
 

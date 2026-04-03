@@ -102,6 +102,23 @@ function noteTags(item) {
   return Array.isArray(item.tags) ? item.tags : [];
 }
 
+function firstSentence(text = '') {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+  const match = normalized.match(/^(.{0,220}?[.!?])(?:\s|$)/);
+  return match ? match[1].trim() : short(normalized, 220);
+}
+
+function atAGlanceItems(note) {
+  const items = [];
+  if (note.verdict) items.push(note.verdict);
+  if (note.summary) items.push(firstSentence(note.summary));
+  else if (note.whySelected) items.push(firstSentence(note.whySelected));
+  if (note.whyItMatters) items.push(firstSentence(note.whyItMatters));
+  else if (note.finalDecision) items.push(firstSentence(note.finalDecision));
+  return items.filter(Boolean).slice(0, 3);
+}
+
 function detailRecord(path) {
   const note = state.content.notes.find((item) => item.path === path);
   if (note) {
@@ -134,7 +151,7 @@ function openDetailByPath(path) {
 
 function renderHero() {
   const latest = state.content.notes[0];
-  const tags = noteTags(latest).slice(0, 4);
+  const glanceItems = atAGlanceItems(latest);
   els.hero.innerHTML = `
     <div class="hero-grid">
       <div class="hero-main">
@@ -144,9 +161,7 @@ function renderHero() {
         <div class="hero-picks">
           <div class="hero-picks-label">At a glance</div>
           <ol class="hero-picks-list">
-            <li>${escapeHtml(latest.verdict || 'No verdict yet')}</li>
-            <li>${escapeHtml(latest.venue || 'Unknown venue')}${latest.year ? ` · ${escapeHtml(String(latest.year))}` : ''}</li>
-            <li>${escapeHtml(tags.join(' · ') || 'Fresh Pocket Reads note')}</li>
+            ${glanceItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('') || '<li>Fresh Pocket Reads note.</li>'}
           </ol>
         </div>
         <a class="hero-scroll" href="#view-overview">↓ Scroll down for the shelf</a>

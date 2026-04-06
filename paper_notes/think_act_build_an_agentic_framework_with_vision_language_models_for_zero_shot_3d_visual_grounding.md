@@ -37,13 +37,19 @@ There is no new end-to-end training objective for TAB itself. The method is a tr
 ### Architecture / parameterization
 The system is an agentic pipeline organized around a 3D-VG skill blueprint. A VLM agent iteratively reasons about the next step, invokes tools such as query analysis, object detection, segmentation, and ranking, and interleaves those with geometric reconstruction. The central technical mechanism is Semantic-Anchored Geometric Expansion, which combines local semantic temporal expansion with global multi-view geometric projection.
 
-### Method figure from the paper
+### Method figures from the paper
 
-The most method-central figure is the **TAB pipeline figure** showing the Think–Act–Build loop, the reference-target identification stage, the semantic temporal expansion stage, the multi-view geometric expansion stage, and the final 2D-to-3D reconstruction path.
+You were right to want the actual paper figures here rather than the weaker extracted panel I used before. For TAB, the methodology is best represented by **Figure 1** and **Figure 2** together: the first gives the overall framework intuition, and the second shows the concrete staged pipeline in more detail.
 
-![Method pipeline figure from TAB (2026), showing the agentic 3D visual grounding workflow from query parsing through semantic and geometric expansion to final 3D reconstruction.](../assets/method_figures/tab_2026_fig_method_pipeline.png)
+**Figure 1 — framework / problem setup**
 
-**Why this figure is the method figure:** it is the cleanest single visual of the paper’s actual systems decomposition. For TAB, the method is not just “use a VLM” — it is the staged handoff from semantic disambiguation to geometric propagation and final reconstruction. This figure shows that division of labor directly.
+![Figure 1 from TAB (2026), showing the paper’s framework-level view of zero-shot 3D visual grounding from RGB-D observations.](../assets/method_figures/tab_2026_fig1_framework.png)
+
+**Figure 2 — detailed TAB methodology pipeline**
+
+![Figure 2 from TAB (2026), showing the detailed Think–Act–Build workflow including reference-target identification, semantic expansion, geometric expansion, and reconstruction.](../assets/method_figures/tab_2026_fig2_pipeline.png)
+
+**Why these are the right methodology figures:** Figure 1 establishes the paper’s actual framing of the task and framework, while Figure 2 shows the real decomposition of the method into semantic disambiguation, expansion, and geometric reconstruction. Together they capture the method much better than a single downstream panel.
 
 ## Key questions this summary must address
 

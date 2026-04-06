@@ -37,6 +37,14 @@ There is no new end-to-end training objective for TAB itself. The method is a tr
 ### Architecture / parameterization
 The system is an agentic pipeline organized around a 3D-VG skill blueprint. A VLM agent iteratively reasons about the next step, invokes tools such as query analysis, object detection, segmentation, and ranking, and interleaves those with geometric reconstruction. The central technical mechanism is Semantic-Anchored Geometric Expansion, which combines local semantic temporal expansion with global multi-view geometric projection.
 
+### Method figure from the paper
+
+The most method-central figure is the **TAB pipeline figure** showing the Think–Act–Build loop, the reference-target identification stage, the semantic temporal expansion stage, the multi-view geometric expansion stage, and the final 2D-to-3D reconstruction path.
+
+![Method pipeline figure from TAB (2026), showing the agentic 3D visual grounding workflow from query parsing through semantic and geometric expansion to final 3D reconstruction.](../assets/method_figures/tab_2026_fig_method_pipeline.png)
+
+**Why this figure is the method figure:** it is the cleanest single visual of the paper’s actual systems decomposition. For TAB, the method is not just “use a VLM” — it is the staged handoff from semantic disambiguation to geometric propagation and final reconstruction. This figure shows that division of labor directly.
+
 ## Key questions this summary must address
 
 ### 1. What problem is the paper trying to solve?

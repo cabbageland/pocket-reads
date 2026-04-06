@@ -43,11 +43,11 @@ You were right to want the actual paper figures here rather than the weaker extr
 
 **Figure 1 — framework / problem setup**
 
-![Figure 1 from TAB (2026), showing the paper’s framework-level view of zero-shot 3D visual grounding from RGB-D observations.](../assets/method_figures/tab_2026_fig1_framework.png)
+![Figure 1 from TAB (2026), showing the paper’s framework-level view of zero-shot 3D visual grounding from RGB-D observations.](../assets/method_figures/tab_2026_fig1_html.png)
 
 **Figure 2 — detailed TAB methodology pipeline**
 
-![Figure 2 from TAB (2026), showing the detailed Think–Act–Build workflow including reference-target identification, semantic expansion, geometric expansion, and reconstruction.](../assets/method_figures/tab_2026_fig2_pipeline.png)
+![Figure 2 from TAB (2026), showing the detailed Think–Act–Build workflow including reference-target identification, semantic expansion, geometric expansion, and reconstruction.](../assets/method_figures/tab_2026_fig2_html.png)
 
 **Why these are the right methodology figures:** Figure 1 establishes the paper’s actual framing of the task and framework, while Figure 2 shows the real decomposition of the method into semantic disambiguation, expansion, and geometric reconstruction. Together they capture the method much better than a single downstream panel.
 

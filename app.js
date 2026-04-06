@@ -24,13 +24,38 @@ function stripLeadingMarkdownTitle(text = '') {
   return text.replace(/^#\s+.+?(\n+|$)/, '');
 }
 
-function renderMarkdown(text = '') {
+function resolveRepoRelativeUrl(url = '', notePath = '') {
+  if (!url) return url;
+  if (/^(https?:|data:|mailto:|tel:|#)/i.test(url)) return url;
+  const base = notePath ? new URL(notePath, window.location.origin + '/') : new URL(window.location.href);
+  return new URL(url, base).pathname;
+}
+
+function renderMarkdown(text = '', notePath = '') {
   const marked = getMarked();
+  const renderer = new marked.Renderer();
+
+  renderer.image = ({ href, title, text }) => {
+    const src = resolveRepoRelativeUrl(href || '', notePath);
+    const alt = escapeHtml(text || '');
+    const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
+    return `<img src="${src}" alt="${alt}"${titleAttr} loading="lazy" />`;
+  };
+
+  renderer.link = ({ href, title, text }) => {
+    const resolved = resolveRepoRelativeUrl(href || '', notePath);
+    const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
+    const isExternal = /^(https?:)?\/\//i.test(resolved);
+    const rel = isExternal ? ' rel="noreferrer" target="_blank"' : '';
+    return `<a href="${resolved}"${titleAttr}${rel}>${text}</a>`;
+  };
+
   marked.setOptions({
     gfm: true,
     breaks: false,
     headerIds: false,
-    mangle: false
+    mangle: false,
+    renderer
   });
   return marked.parse(stripLeadingMarkdownTitle(text));
 }
@@ -142,7 +167,7 @@ function openDetailByPath(path) {
   els.detailKicker.textContent = record.kind;
   els.detailTitle.textContent = record.title;
   els.detailMeta.textContent = record.meta || '';
-  els.detailBody.innerHTML = renderMarkdown(state.content.markdown[path]);
+  els.detailBody.innerHTML = renderMarkdown(state.content.markdown[path], path);
   els.detailSourceLink.href = githubMarkdownUrl(path);
   els.detailSourceLink.textContent = 'open on GitHub';
   setActiveView('detail');

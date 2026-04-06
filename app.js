@@ -35,15 +35,21 @@ function renderMarkdown(text = '', notePath = '') {
   const marked = getMarked();
   const renderer = new marked.Renderer();
 
-  renderer.image = ({ href, title, text }) => {
-    const src = resolveRepoRelativeUrl(href || '', notePath);
-    const alt = escapeHtml(text || '');
+  renderer.image = (token) => {
+    const href = token?.href || token?.url || '';
+    const title = token?.title || '';
+    const text = token?.text || '';
+    const src = resolveRepoRelativeUrl(href, notePath);
+    const alt = escapeHtml(text);
     const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
     return `<img src="${src}" alt="${alt}"${titleAttr} loading="lazy" />`;
   };
 
-  renderer.link = ({ href, title, text }) => {
-    const resolved = resolveRepoRelativeUrl(href || '', notePath);
+  renderer.link = (token) => {
+    const href = token?.href || token?.url || '';
+    const title = token?.title || '';
+    const text = token?.text || '';
+    const resolved = resolveRepoRelativeUrl(href, notePath);
     const titleAttr = title ? ` title="${escapeHtml(title)}"` : '';
     const isExternal = /^(https?:)?\/\//i.test(resolved);
     const rel = isExternal ? ' rel="noreferrer" target="_blank"' : '';

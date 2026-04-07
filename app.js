@@ -71,19 +71,13 @@ function githubMarkdownUrl(path = '') {
   return `https://github.com/${repo}/blob/main/${path}`;
 }
 
-function matchQuery(parts) {
-  const hay = parts.filter(Boolean).join(' ').toLowerCase();
-  const q = state.query.trim().toLowerCase();
-  return !q || hay.includes(q);
-}
-
 function makeClickableCard(node, path) {
   node.classList.add('clickable-card');
   node.tabIndex = 0;
   node.setAttribute('role', 'link');
   const open = () => openDetailByPath(path);
   node.addEventListener('click', (e) => {
-    if (e.target.closest('a, button, summary')) return;
+    if (e.target.closest('a, button, summary, select, input')) return;
     open();
   });
   node.addEventListener('keydown', (e) => {
@@ -101,7 +95,8 @@ const state = {
   query: '',
   verdict: '',
   previousView: 'overview',
-  currentDetailPath: ''
+  currentDetailPath: '',
+  activeCollectionId: 'papers'
 };
 
 const els = {
@@ -118,18 +113,34 @@ const els = {
   detailMeta: document.getElementById('detailMeta'),
   detailBody: document.getElementById('detailBody'),
   detailSourceLink: document.getElementById('detailSourceLink'),
-  detailBackButton: document.getElementById('detailBackButton')
+  detailBackButton: document.getElementById('detailBackButton'),
+  collectionTabs: document.getElementById('collectionTabs')
 };
 
 const templates = {
   note: document.getElementById('noteCardTemplate')
 };
 
+function getCollections() {
+  return state.content?.collections || [];
+}
+
+function getActiveCollection() {
+  return getCollections().find((collection) => collection.id === state.activeCollectionId) || getCollections()[0];
+}
+
+function getActiveItems() {
+  return getActiveCollection()?.items || [];
+}
+
 function noteMeta(item) {
+  if (item.collection === 'tools') {
+    return [item.category, item.platform, item.pricing].filter(Boolean).join(' · ');
+  }
   return [item.authors, item.venue, item.year].filter(Boolean).join(' · ');
 }
 
-function noteTags(item) {
+function itemTags(item) {
   return Array.isArray(item.tags) ? item.tags : [];
 }
 
@@ -140,24 +151,30 @@ function firstSentence(text = '') {
   return match ? match[1].trim() : short(normalized, 220);
 }
 
-function atAGlanceItems(note) {
+function atAGlanceItems(item) {
+  if (!item) return [];
+  if (item.collection === 'tools') {
+    return [item.whatItIs, item.usedFor, item.notes || item.summary].filter(Boolean).map(firstSentence).slice(0, 3);
+  }
   const items = [];
-  if (note.verdict) items.push(note.verdict);
-  if (note.summary) items.push(firstSentence(note.summary));
-  else if (note.whySelected) items.push(firstSentence(note.whySelected));
-  if (note.whyItMatters) items.push(firstSentence(note.whyItMatters));
-  else if (note.finalDecision) items.push(firstSentence(note.finalDecision));
+  if (item.verdict) items.push(item.verdict);
+  if (item.summary) items.push(firstSentence(item.summary));
+  else if (item.whySelected) items.push(firstSentence(item.whySelected));
+  if (item.whyItMatters) items.push(firstSentence(item.whyItMatters));
+  else if (item.finalDecision) items.push(firstSentence(item.finalDecision));
   return items.filter(Boolean).slice(0, 3);
 }
 
 function detailRecord(path) {
-  const note = state.content.notes.find((item) => item.path === path);
-  if (note) {
-    return {
-      kind: 'Paper note',
-      title: note.title,
-      meta: [noteMeta(note), formatDate(note.dateRead)].filter(Boolean).join(' · ')
-    };
+  for (const collection of getCollections()) {
+    const item = collection.items.find((entry) => entry.path === path);
+    if (item) {
+      return {
+        kind: collection.singular,
+        title: item.title,
+        meta: [noteMeta(item), formatDate(item.dateRead || item.dateSurfaced)].filter(Boolean).join(' · ')
+      };
+    }
   }
   return { kind: 'Markdown', title: path.split('/').pop() || path, meta: '' };
 }
@@ -180,22 +197,46 @@ function openDetailByPath(path) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function renderCollectionTabs() {
+  els.collectionTabs.innerHTML = getCollections().map((collection) => `
+    <button class="tab ${collection.id === state.activeCollectionId ? 'active' : ''}" data-collection-id="${collection.id}" type="button">${escapeHtml(collection.label)}</button>
+  `).join('');
+  els.collectionTabs.querySelectorAll('[data-collection-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.activeCollectionId = btn.dataset.collectionId;
+      state.verdict = '';
+      els.verdictFilter.value = '';
+      updateCollectionUi();
+    });
+  });
+}
+
 function renderHero() {
-  const latest = state.content.notes[0];
+  const collection = getActiveCollection();
+  const latest = collection?.items?.[0];
+  if (!collection || !latest) {
+    els.hero.innerHTML = '';
+    return;
+  }
   const glanceItems = atAGlanceItems(latest);
+  const subtitle = collection.id === 'tools'
+    ? (latest.usedFor || latest.summary || 'A fresh tool card ready to browse.')
+    : (latest.summary || latest.whySelected || 'A fresh paper note ready to read.');
+  const kicker = collection.id === 'tools' ? 'Pocket tools' : 'Pocket notebook';
+  const shelfLabel = collection.id === 'tools' ? 'tool shelf' : 'shelf';
   els.hero.innerHTML = `
     <div class="hero-grid">
       <div class="hero-main">
-        <div class="kicker">Pocket notebook</div>
+        <div class="kicker">${escapeHtml(kicker)}</div>
         <h2><button class="hero-title-link reset-button" data-open-path="${latest.path}">${escapeHtml(latest.title)}</button></h2>
-        <p class="big">${escapeHtml(latest.summary || latest.whySelected || 'A fresh paper note ready to read.')}</p>
+        <p class="big">${escapeHtml(subtitle)}</p>
         <div class="hero-picks">
           <div class="hero-picks-label">At a glance</div>
           <ol class="hero-picks-list">
-            ${glanceItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('') || '<li>Fresh Pocket Reads note.</li>'}
+            ${glanceItems.map((item) => `<li>${escapeHtml(item)}</li>`).join('') || `<li>Fresh ${escapeHtml(collection.singular.toLowerCase())}.</li>`}
           </ol>
         </div>
-        <a class="hero-scroll" href="#view-overview">↓ Scroll down for the shelf</a>
+        <a class="hero-scroll" href="#view-overview">↓ Scroll down for the ${escapeHtml(shelfLabel)}</a>
       </div>
     </div>
   `;
@@ -203,12 +244,16 @@ function renderHero() {
 }
 
 function renderStats() {
-  const verdicts = new Set(state.content.notes.map((note) => note.verdict).filter(Boolean));
-  const tagCount = new Set(state.content.notes.flatMap((note) => noteTags(note))).size;
+  const collections = getCollections();
+  const active = getActiveCollection();
+  const items = active?.items || [];
+  const verdicts = new Set(items.map((item) => item.verdict).filter(Boolean));
+  const tagCount = new Set(items.flatMap((item) => itemTags(item))).size;
   const statData = [
-    ['Paper notes', state.content.notes.length],
-    ['Verdict buckets', verdicts.size],
-    ['Tracked tags', tagCount]
+    ['Paper notes', collections.find((c) => c.id === 'papers')?.count || 0],
+    ['Tool cards', collections.find((c) => c.id === 'tools')?.count || 0],
+    ['Tracked tags', tagCount],
+    ['Current verdict buckets', verdicts.size]
   ];
   els.stats.innerHTML = statData.map(([label, value]) => `
     <article class="stat">
@@ -219,34 +264,67 @@ function renderStats() {
 }
 
 function renderOverview() {
-  const latest = state.content.notes[0];
-  els.latestNoteDate.textContent = formatDate(latest.dateRead);
-  els.latestNote.innerHTML = `
-    <h3><button class="card-title-link reset-button" data-open-path="${latest.path}">${escapeHtml(latest.title)}</button></h3>
-    <p class="theme">${escapeHtml(noteMeta(latest) || latest.verdict || 'Pocket Reads note')}</p>
-    <p>${escapeHtml(latest.summary || latest.whySelected || '')}</p>
-    <p>${escapeHtml(latest.whyItMatters || latest.finalDecision || '')}</p>
-    <div class="detail-tag-row">
-      ${noteTags(latest).map((tag) => `<span class="chip tag">${escapeHtml(tag)}</span>`).join('')}
-    </div>
-    <p><button class="button ghost reset-button" data-open-path="${latest.path}">read note here</button></p>
-  `;
+  const collection = getActiveCollection();
+  const latest = collection?.items?.[0];
+  if (!collection || !latest) {
+    els.latestNote.innerHTML = '<p class="muted">Nothing here yet.</p>';
+    els.recentPicks.innerHTML = '';
+    els.latestNoteDate.textContent = '';
+    return;
+  }
+
+  els.latestNoteDate.textContent = formatDate(latest.dateRead || latest.dateSurfaced);
+
+  if (collection.id === 'tools') {
+    els.latestNote.innerHTML = `
+      <h3><button class="card-title-link reset-button" data-open-path="${latest.path}">${escapeHtml(latest.title)}</button></h3>
+      <p class="theme">${escapeHtml(noteMeta(latest) || latest.status || 'Pocket tool card')}</p>
+      <p>${escapeHtml(latest.whatItIs || latest.summary || '')}</p>
+      <p>${escapeHtml(latest.usedFor || latest.notes || '')}</p>
+      <div class="detail-tag-row">
+        ${itemTags(latest).map((tag) => `<span class="chip tag">${escapeHtml(tag)}</span>`).join('')}
+      </div>
+      <p><button class="button ghost reset-button" data-open-path="${latest.path}">read card here</button></p>
+    `;
+  } else {
+    els.latestNote.innerHTML = `
+      <h3><button class="card-title-link reset-button" data-open-path="${latest.path}">${escapeHtml(latest.title)}</button></h3>
+      <p class="theme">${escapeHtml(noteMeta(latest) || latest.verdict || 'Pocket Reads note')}</p>
+      <p>${escapeHtml(latest.summary || latest.whySelected || '')}</p>
+      <p>${escapeHtml(latest.whyItMatters || latest.finalDecision || '')}</p>
+      <div class="detail-tag-row">
+        ${itemTags(latest).map((tag) => `<span class="chip tag">${escapeHtml(tag)}</span>`).join('')}
+      </div>
+      <p><button class="button ghost reset-button" data-open-path="${latest.path}">read note here</button></p>
+    `;
+  }
+
   els.latestNote.querySelectorAll('[data-open-path]').forEach((node) => {
     node.addEventListener('click', () => openDetailByPath(latest.path));
   });
   makeClickableCard(els.latestNote, latest.path);
 
-  const recent = state.content.notes.slice(0, 5);
-  els.recentPicks.innerHTML = recent.map((note) => `
-    <article class="mini-pick" data-href="${note.path}">
+  const recent = collection.items.slice(0, 5);
+  els.recentPicks.innerHTML = recent.map((item) => collection.id === 'tools' ? `
+    <article class="mini-pick" data-href="${item.path}">
       <div class="card-meta-row">
-        <button class="chip verdict reset-button" data-open-path="${note.path}">${escapeHtml(note.verdict || 'Unknown')}</button>
-        <button class="chip venue reset-button" data-open-path="${note.path}">${escapeHtml(note.venue || 'Unknown venue')}</button>
+        <button class="chip verdict reset-button" data-open-path="${item.path}">${escapeHtml(item.category || item.status || 'Tool')}</button>
+        <button class="chip venue reset-button" data-open-path="${item.path}">${escapeHtml(item.platform || item.pricing || 'Tool card')}</button>
       </div>
-      <h4><button class="card-title-link reset-button" data-open-path="${note.path}">${escapeHtml(note.title)}</button></h4>
-      <p>${escapeHtml(short(note.whySelected || note.summary || note.whyItMatters, 180))}</p>
+      <h4><button class="card-title-link reset-button" data-open-path="${item.path}">${escapeHtml(item.title)}</button></h4>
+      <p>${escapeHtml(short(item.usedFor || item.whatItIs || item.notes, 180))}</p>
+    </article>
+  ` : `
+    <article class="mini-pick" data-href="${item.path}">
+      <div class="card-meta-row">
+        <button class="chip verdict reset-button" data-open-path="${item.path}">${escapeHtml(item.verdict || 'Unknown')}</button>
+        <button class="chip venue reset-button" data-open-path="${item.path}">${escapeHtml(item.venue || 'Unknown venue')}</button>
+      </div>
+      <h4><button class="card-title-link reset-button" data-open-path="${item.path}">${escapeHtml(item.title)}</button></h4>
+      <p>${escapeHtml(short(item.whySelected || item.summary || item.whyItMatters, 180))}</p>
     </article>
   `).join('');
+
   els.recentPicks.querySelectorAll('.mini-pick').forEach((node) => makeClickableCard(node, node.dataset.href));
   els.recentPicks.querySelectorAll('[data-open-path]').forEach((node) => {
     node.addEventListener('click', (e) => {
@@ -256,27 +334,28 @@ function renderOverview() {
   });
 }
 
+function itemMatches(item) {
+  const q = state.query.trim().toLowerCase();
+  const verdictOk = !state.verdict || (item.verdict || '').toLowerCase() === state.verdict.toLowerCase();
+  const hay = [
+    item.title,
+    item.searchText,
+    ...(itemTags(item))
+  ].filter(Boolean).join(' ').toLowerCase();
+  return verdictOk && (!q || hay.includes(q));
+}
+
 function renderNotes() {
-  const items = state.content.notes.filter((item) => {
-    const verdictOk = !state.verdict || (item.verdict || '').toLowerCase() === state.verdict.toLowerCase();
-    return verdictOk && matchQuery([
-      item.title,
-      item.authors,
-      item.venue,
-      item.verdict,
-      item.whySelected,
-      item.summary,
-      item.whyItMatters,
-      item.finalDecision,
-      ...(noteTags(item))
-    ]);
-  });
+  const collection = getActiveCollection();
+  const items = (collection?.items || []).filter(itemMatches);
 
   els.notesList.innerHTML = '';
   for (const item of items) {
     const node = templates.note.content.firstElementChild.cloneNode(true);
     const verdict = node.querySelector('.verdict');
-    verdict.textContent = item.verdict || 'Unknown';
+    verdict.textContent = item.collection === 'tools'
+      ? (item.category || item.status || 'Tool')
+      : (item.verdict || 'Unknown');
     verdict.href = '#';
     verdict.addEventListener('click', (e) => {
       e.preventDefault();
@@ -284,24 +363,37 @@ function renderNotes() {
     });
 
     const venue = node.querySelector('.venue');
-    venue.textContent = item.venue || 'Unknown venue';
+    venue.textContent = item.collection === 'tools'
+      ? (item.platform || item.pricing || 'Tool card')
+      : (item.venue || 'Unknown venue');
     venue.href = '#';
     venue.addEventListener('click', (e) => {
       e.preventDefault();
       openDetailByPath(item.path);
     });
 
-    node.querySelector('.tag-count').textContent = `${noteTags(item).length} tags`;
+    node.querySelector('.tag-count').textContent = `${itemTags(item).length} tags`;
     node.querySelector('h3').innerHTML = `<button class="card-title-link reset-button" data-open-path="${item.path}">${escapeHtml(item.title)}</button>`;
-    node.querySelector('.why').textContent = short(item.whySelected || item.summary, 220);
-    node.querySelector('.overview').textContent = short(item.summary, 420);
-    node.querySelector('.why-matters').textContent = item.whyItMatters ? short(item.whyItMatters, 220) : '';
+
+    if (item.collection === 'tools') {
+      node.querySelector('.why').textContent = short(item.whatItIs || item.summary, 220);
+      node.querySelector('.overview').textContent = short(item.usedFor || item.notes || item.summary, 420);
+      node.querySelector('.why-matters').textContent = item.notes ? short(item.notes, 220) : '';
+    } else {
+      node.querySelector('.why').textContent = short(item.whySelected || item.summary, 220);
+      node.querySelector('.overview').textContent = short(item.summary, 420);
+      node.querySelector('.why-matters').textContent = item.whyItMatters ? short(item.whyItMatters, 220) : '';
+    }
 
     const tagRow = node.querySelector('.tag-row');
-    tagRow.innerHTML = noteTags(item).slice(0, 6).map((tag) => `<span class="chip tag">${escapeHtml(tag)}</span>`).join('');
+    tagRow.innerHTML = itemTags(item).slice(0, 6).map((tag) => `<span class="chip tag">${escapeHtml(tag)}</span>`).join('');
 
-    const paperLink = node.querySelector('.paper-link');
-    paperLink.href = item.paperUrl || githubMarkdownUrl(item.path);
+    const primaryLink = node.querySelector('.paper-link');
+    primaryLink.href = item.collection === 'tools'
+      ? (item.toolUrl || githubMarkdownUrl(item.path))
+      : (item.paperUrl || githubMarkdownUrl(item.path));
+    primaryLink.textContent = collection.itemLinkLabel || (item.collection === 'tools' ? 'tool' : 'paper');
+
     const mdLink = node.querySelector('.md-link');
     mdLink.href = githubMarkdownUrl(item.path);
     mdLink.textContent = 'open on GitHub';
@@ -312,17 +404,23 @@ function renderNotes() {
   }
 
   if (!items.length) {
-    els.notesList.innerHTML = '<article class="panel"><p class="muted">No notes matched the current filters.</p></article>';
+    els.notesList.innerHTML = `<article class="panel"><p class="muted">${escapeHtml(collection?.emptyMessage || 'No notes matched the current filters.')}</p></article>`;
   }
 }
 
 function renderVerdictOptions() {
-  const options = Array.from(new Set(state.content.notes.map((note) => note.verdict).filter(Boolean))).sort();
-  els.verdictFilter.innerHTML = '<option value="">All verdicts</option>' + options.map((value) => `<option>${escapeHtml(value)}</option>`).join('');
+  const collection = getActiveCollection();
+  const options = Array.from(new Set((collection?.items || []).map((item) => item.verdict).filter(Boolean))).sort();
+  const label = collection?.id === 'tools' ? 'All statuses / categories' : 'All verdicts';
+  els.verdictFilter.innerHTML = `<option value="">${escapeHtml(label)}</option>` + options.map((value) => `<option>${escapeHtml(value)}</option>`).join('');
 }
 
-function renderAll() {
+function updateCollectionUi() {
+  const collection = getActiveCollection();
+  if (!collection) return;
+  renderCollectionTabs();
   renderVerdictOptions();
+  els.searchInput.placeholder = collection.searchPlaceholder || 'Search...';
   renderHero();
   renderStats();
   renderOverview();
@@ -331,12 +429,12 @@ function renderAll() {
 
 function setActiveView(view) {
   state.view = view === 'detail' ? 'detail' : view;
-  document.querySelectorAll('.tab').forEach((btn) => btn.classList.toggle('active', btn.dataset.view === view));
+  document.querySelectorAll('.tab[data-view]').forEach((btn) => btn.classList.toggle('active', btn.dataset.view === view));
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${view}`));
 }
 
 function setupTabs() {
-  document.querySelectorAll('.tab').forEach((btn) => {
+  document.querySelectorAll('.tab[data-view]').forEach((btn) => {
     btn.addEventListener('click', () => setActiveView(btn.dataset.view));
   });
 }
@@ -360,7 +458,10 @@ async function init() {
 
   const res = await fetch('./data/content.json');
   state.content = await res.json();
-  renderAll();
+  if (!getCollections().some((collection) => collection.id === state.activeCollectionId)) {
+    state.activeCollectionId = getCollections()[0]?.id || 'papers';
+  }
+  updateCollectionUi();
 }
 
 init().catch((err) => {

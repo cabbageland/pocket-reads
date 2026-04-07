@@ -8,9 +8,33 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-NOTES_DIR = ROOT / "paper_notes"
+PAPERS_DIR = ROOT / "paper_notes"
+TOOLS_DIR = ROOT / "tool_notes"
 OUT_PATH = ROOT / "data" / "content.json"
 REPO_NAME = "cabbageland/pocket-reads"
+
+
+PAPER_COLLECTION = {
+    "id": "papers",
+    "label": "Paper notes",
+    "singular": "Paper note",
+    "dir": PAPERS_DIR,
+    "pathPrefix": "paper_notes",
+    "emptyMessage": "No paper notes matched the current filters.",
+    "searchPlaceholder": "Search paper titles, tags, verdicts, venues, or note text...",
+    "itemLinkLabel": "paper",
+}
+
+TOOL_COLLECTION = {
+    "id": "tools",
+    "label": "Tools",
+    "singular": "Tool card",
+    "dir": TOOLS_DIR,
+    "pathPrefix": "tool_notes",
+    "emptyMessage": "No tool cards matched the current filters.",
+    "searchPlaceholder": "Search tool names, uses, tags, notes, or note text...",
+    "itemLinkLabel": "tool",
+}
 
 
 def read_text(path: Path) -> str:
@@ -106,7 +130,7 @@ def git_added_timestamp(path: Path) -> str:
         return ""
 
 
-def parse_note(path: Path) -> dict[str, object]:
+def parse_paper_note(path: Path, collection: dict[str, object]) -> dict[str, object]:
     full_text = read_text(path)
     meta, body = split_front_matter(full_text)
     lines = [line for line in body.splitlines() if line.strip()]
@@ -155,7 +179,9 @@ def parse_note(path: Path) -> dict[str, object]:
 
     slug = meta.get("slug") or slugify(path.stem)
     added_at = git_added_timestamp(path)
+    rel_path = f"{collection['pathPrefix']}/{path.name}"
     return {
+        "collection": collection["id"],
         "slug": slug,
         "title": title,
         "authors": authors,
@@ -172,26 +198,116 @@ def parse_note(path: Path) -> dict[str, object]:
         "summary": summary,
         "whyItMatters": why_it_matters,
         "finalDecision": final_decision,
-        "path": f"paper_notes/{path.name}",
+        "path": rel_path,
+        "searchText": " ".join(
+            filter(
+                None,
+                [
+                    title,
+                    authors,
+                    venue,
+                    year,
+                    why_selected,
+                    summary,
+                    why_it_matters,
+                    final_decision,
+                    clean_md(body),
+                    " ".join(list_field(meta.get("tags", ""))),
+                ],
+            )
+        ),
     }
 
 
+def parse_tool_note(path: Path, collection: dict[str, object]) -> dict[str, object]:
+    full_text = read_text(path)
+    meta, body = split_front_matter(full_text)
+    title = clean_md(meta.get("title") or re.sub(r"^#\s+", "", body.splitlines()[0]).strip())
+    slug = meta.get("slug") or slugify(path.stem)
+    added_at = git_added_timestamp(path)
+    rel_path = f"{collection['pathPrefix']}/{path.name}"
+
+    return {
+        "collection": collection["id"],
+        "slug": slug,
+        "title": title,
+        "toolUrl": clean_md(meta.get("tool_url", "")),
+        "category": clean_md(meta.get("category", "")),
+        "platform": clean_md(meta.get("platform", "")),
+        "pricing": clean_md(meta.get("pricing", "")),
+        "status": clean_md(meta.get("status", "")),
+        "dateRead": clean_md(meta.get("date_read", "")),
+        "dateSurfaced": clean_md(meta.get("date_surfaced", "")),
+        "surfacedVia": clean_md(meta.get("surfaced_via", "")),
+        "addedAt": added_at,
+        "verdict": clean_md(meta.get("verdict", "") or meta.get("status", "")),
+        "summary": clean_md(meta.get("summary", "") or first_paragraph(extract_section(body, "What it is") or body)),
+        "whatItIs": clean_md(extract_section(body, "What it is") or meta.get("what_it_is", "")),
+        "usedFor": clean_md(extract_section(body, "What it is used for") or meta.get("used_for", "")),
+        "notes": clean_md(extract_section(body, "Additional notes") or meta.get("notes", "")),
+        "whySelected": clean_md(meta.get("why_selected", "")),
+        "tags": [clean_md(item) for item in list_field(meta.get("tags", ""))],
+        "path": rel_path,
+        "searchText": " ".join(
+            filter(
+                None,
+                [
+                    title,
+                    clean_md(meta.get("category", "")),
+                    clean_md(meta.get("platform", "")),
+                    clean_md(meta.get("pricing", "")),
+                    clean_md(meta.get("status", "")),
+                    clean_md(meta.get("summary", "")),
+                    clean_md(meta.get("why_selected", "")),
+                    clean_md(body),
+                    " ".join(list_field(meta.get("tags", ""))),
+                ],
+            )
+        ),
+    }
+
+
+COLLECTIONS = [PAPER_COLLECTION, TOOL_COLLECTION]
+PARSERS = {
+    "papers": parse_paper_note,
+    "tools": parse_tool_note,
+}
+
+
 def main() -> None:
-    notes = sorted(
-        (parse_note(path) for path in NOTES_DIR.glob("*.md") if path.name != ".gitkeep"),
-        key=lambda item: (item["addedAt"] or "", item["dateRead"] or "", item["title"]),
-        reverse=True,
-    )
+    collections_payload = []
+    all_markdown: dict[str, str] = {}
+
+    for collection in COLLECTIONS:
+        items = []
+        dir_path: Path = collection["dir"]
+        parser = PARSERS[collection["id"]]
+        if dir_path.exists():
+            for path in sorted(dir_path.glob("*.md")):
+                if path.name in {".gitkeep", "README.md"}:
+                    continue
+                items.append(parser(path, collection))
+                all_markdown[f"{collection['pathPrefix']}/{path.name}"] = split_front_matter(read_text(path))[1]
+
+        items.sort(key=lambda item: (item.get("addedAt") or "", item.get("dateRead") or "", item["title"]), reverse=True)
+
+        collections_payload.append({
+            "id": collection["id"],
+            "label": collection["label"],
+            "singular": collection["singular"],
+            "pathPrefix": collection["pathPrefix"],
+            "emptyMessage": collection["emptyMessage"],
+            "searchPlaceholder": collection["searchPlaceholder"],
+            "itemLinkLabel": collection["itemLinkLabel"],
+            "count": len(items),
+            "items": items,
+        })
 
     payload = {
         "generatedAt": datetime.now(timezone.utc).isoformat(),
         "repo": REPO_NAME,
-        "notes": notes,
-        "markdown": {
-            f"paper_notes/{path.name}": split_front_matter(read_text(path))[1]
-            for path in NOTES_DIR.glob("*.md")
-            if path.name != ".gitkeep"
-        },
+        "collections": collections_payload,
+        "markdown": all_markdown,
     }
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)

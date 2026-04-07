@@ -1,28 +1,80 @@
 # Pocket Reads
 
-Pocket Reads is a plain static site for browsing paper notes as polished cards and full markdown detail views.
+Pocket Reads is a plain static site for browsing compact knowledge cards and full markdown detail views.
 
 It borrows the visual feel and note-detail presentation style from `cabbageclaw-paper-daily-web`, but this repo is intentionally simpler:
 
 - no daily digests
 - no audio
-- only paper notes
-- content generated locally from markdown files in `paper_notes/`
+- static GitHub Pages-style site
+- content generated locally from markdown files
+- currently supports both **paper notes** and **tool cards**
 
 ## Repo structure
 
 - `index.html` - static shell
 - `styles.css` - site styling
-- `app.js` - client-side rendering for overview, cards, and detail view
-- `paper_notes/` - source markdown notes
-- `build_content.py` - parses note metadata and markdown into `data/content.json`
+- `app.js` - client-side rendering for overview, cards, detail view, tabs, and search
+- `paper_notes/` - source markdown notes for papers
+- `tool_notes/` - source markdown notes for tools/products
+- `build_content.py` - parses markdown into `data/content.json`
 - `data/content.json` - generated content snapshot committed with the site
 
-## Add a note
+## Content model
+
+Pocket Reads now has two first-class collections:
+
+### 1. Paper notes
+For deep reads of papers, project writeups, or clearly labeled partial-access research notes.
+
+### 2. Tool cards
+For product / software / website links Tracy sends under the new `[tools]` workflow.
+These should answer, at minimum:
+- what the tool is
+- what it is used for
+- any additional notes or context from Tracy or the source material
+
+Both collections are indexed into the same generated `content.json`, but they render in separate tabs in the UI and share the same keyword-search behavior.
+
+## Add a paper note
 
 Add a new markdown file under `paper_notes/` using the `i-read-something` deep-read structure.
 
+## Add a tool card
+
+Add a new markdown file under `tool_notes/`.
+Use strong keyword-rich titles/tags so the built-in search can find tools by use case, domain, platform, or feature words.
+
+Recommended structure:
+
+```md
+# Tool Name
+
+## What it is
+
+## What it is used for
+
+## Additional notes
+```
+
+Recommended front matter fields:
+- `title`
+- `slug`
+- `tool_url`
+- `category`
+- `platform`
+- `pricing`
+- `status`
+- `date_read`
+- `date_surfaced`
+- `surfaced_via`
+- `summary`
+- `why_selected`
+- `tags`
+
 ## Workflow rules for managing this repo
+
+### Paper-note rules
 
 1. **Canonical source must be the actual paper whenever possible.**
    - If the surfaced link is an X post, project page, GitHub Pages site, Google Scholar citation, or other non-paper landing page, first resolve the real paper by title/authors.
@@ -46,28 +98,24 @@ Add a new markdown file under `paper_notes/` using the `i-read-something` deep-r
    - Avoid duplicate `via X` variants once the real paper has been resolved.
    - Merge provenance into the canonical note instead of keeping social-link duplicates.
 
-## Note format
+### Tool-card rules
 
-This repo should use the same paper-note format and writing standard as `i-read-something`:
-- direct
-- skeptical
-- compact
-- mechanism-first
-- honest about uncertainty
+1. **Tool cards can be written directly from the supplied tool/product page.**
+   - Unlike paper notes, the tool page itself is often the canonical source.
+   - Preserve Tracy-supplied context if it matters.
 
-Required structure:
-- `# Title`
-- `## Basic info`
-- `## Quick verdict`
-- `## One-paragraph overview`
-- `## Model definition`
-- `## Key questions this summary must address`
+2. **Keep them practical, not ad-like.**
+   - Say what the tool actually does.
+   - Say what it is useful for.
+   - Add caveats, pricing, access constraints, or relevant workflow notes when available.
 
-Notes:
+3. **Searchability matters.**
+   - Use keyword-rich titles, summaries, and tags.
+   - Include synonyms or domain words where they help future retrieval.
 
-- `build_content.py` parses the `i-read-something`-style markdown notes directly
-- the full markdown note is preserved in `data/content.json` and rendered in the detail view
-- surfaced provenance such as `Date surfaced` / `Surfaced via` is encouraged when helpful
+4. **Prefer one canonical card per tool.**
+   - Update the existing card when the same tool is resurfaced.
+   - Avoid duplicate cards for the same product unless there is a real reason.
 
 ## Rebuild content
 
@@ -77,7 +125,9 @@ Run:
 python3 build_content.py
 ```
 
-That regenerates `data/content.json` from `paper_notes/*.md`.
+That regenerates `data/content.json` from both:
+- `paper_notes/*.md`
+- `tool_notes/*.md`
 
 ## Local preview
 
@@ -88,6 +138,15 @@ python3 -m http.server 8000
 ```
 
 Then open `http://localhost:8000`.
+
+## Basic verification checklist
+
+After adding or updating notes:
+1. run `python3 build_content.py`
+2. load the local site
+3. confirm the entry appears in the correct tab
+4. confirm keyword search finds it using obvious query terms
+5. confirm the detail page renders and the source link works
 
 ## GitHub Pages
 

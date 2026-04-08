@@ -93,7 +93,6 @@ const state = {
   content: null,
   view: 'overview',
   query: '',
-  verdict: '',
   previousView: 'overview',
   currentDetailPath: '',
   activeCollectionId: 'papers'
@@ -107,7 +106,6 @@ const els = {
   recentPicks: document.getElementById('recentPicks'),
   notesList: document.getElementById('notesList'),
   searchInput: document.getElementById('searchInput'),
-  verdictFilter: document.getElementById('verdictFilter'),
   detailTitle: document.getElementById('detailTitle'),
   detailKicker: document.getElementById('detailKicker'),
   detailMeta: document.getElementById('detailMeta'),
@@ -204,8 +202,6 @@ function renderCollectionTabs() {
   els.collectionTabs.querySelectorAll('[data-collection-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.activeCollectionId = btn.dataset.collectionId;
-      state.verdict = '';
-      els.verdictFilter.value = '';
       updateCollectionUi();
     });
   });
@@ -247,13 +243,11 @@ function renderStats() {
   const collections = getCollections();
   const active = getActiveCollection();
   const items = active?.items || [];
-  const verdicts = new Set(items.map((item) => item.verdict).filter(Boolean));
   const tagCount = new Set(items.flatMap((item) => itemTags(item))).size;
   const statData = [
     ['Paper notes', collections.find((c) => c.id === 'papers')?.count || 0],
     ['Tool cards', collections.find((c) => c.id === 'tools')?.count || 0],
-    ['Tracked tags', tagCount],
-    ['Current verdict buckets', verdicts.size]
+    ['Tracked tags', tagCount]
   ];
   els.stats.innerHTML = statData.map(([label, value]) => `
     <article class="stat">
@@ -336,13 +330,12 @@ function renderOverview() {
 
 function itemMatches(item) {
   const q = state.query.trim().toLowerCase();
-  const verdictOk = !state.verdict || (item.verdict || '').toLowerCase() === state.verdict.toLowerCase();
   const hay = [
     item.title,
     item.searchText,
     ...(itemTags(item))
   ].filter(Boolean).join(' ').toLowerCase();
-  return verdictOk && (!q || hay.includes(q));
+  return !q || hay.includes(q);
 }
 
 function renderNotes() {
@@ -408,18 +401,10 @@ function renderNotes() {
   }
 }
 
-function renderVerdictOptions() {
-  const collection = getActiveCollection();
-  const options = Array.from(new Set((collection?.items || []).map((item) => item.verdict).filter(Boolean))).sort();
-  const label = collection?.id === 'tools' ? 'All statuses / categories' : 'All verdicts';
-  els.verdictFilter.innerHTML = `<option value="">${escapeHtml(label)}</option>` + options.map((value) => `<option>${escapeHtml(value)}</option>`).join('');
-}
-
 function updateCollectionUi() {
   const collection = getActiveCollection();
   if (!collection) return;
   renderCollectionTabs();
-  renderVerdictOptions();
   els.searchInput.placeholder = collection.searchPlaceholder || 'Search...';
   renderHero();
   renderStats();
@@ -448,11 +433,6 @@ async function init() {
   els.searchInput.addEventListener('input', (e) => {
     state.query = e.target.value;
     if (state.query.trim()) setActiveView('notes');
-    renderNotes();
-  });
-  els.verdictFilter.addEventListener('change', (e) => {
-    state.verdict = e.target.value;
-    if (state.verdict) setActiveView('notes');
     renderNotes();
   });
 

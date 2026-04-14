@@ -6,17 +6,17 @@ category: Presentation generation
 platform: LLM workflow / code-driven slides
 pricing: Depends on model/tool access
 status: Keep
-date_read: 2026-04-06
-date_surfaced: 2026-04-06
+date_read: 2026-04-14
+date_surfaced: 2026-04-14
 surfaced_via: Tracy in #pocket-reads
-summary: A practical workflow for generating clean lightweight slides by having Claude write TypeScript or TSX, then rendering that into HTML slides.
-why_selected: Tracy explicitly wants a Tools tab workflow for links and tool ideas, and surfaced this as a useful quick-slide workflow worth preserving.
+summary: A practical code-first slide workflow where Claude or Codex generates React/TSX slide decks with inline styling, explicit palette objects, and browser-native navigation/UI rather than relying on heavyweight slide GUIs.
+why_selected: Tracy explicitly called out a Claude-code slide trick and wanted the TS/TSX slide-template pattern remembered and preserved as a reusable tool card.
 tags:
   - slides
   - presentation
   - typescript
   - tsx
-  - html
+  - react
   - claude
   - codex
   - workflow
@@ -27,88 +27,134 @@ tags:
 
 ## What it is
 
-This is less a single packaged app and more a practical **code-first slide-making workflow**: ask Claude to generate slides in **TypeScript or TSX**, keep the visual language simple and clean, then render the result into HTML slides or a browser-viewable presentation.
+This is a **code-first slide workflow**: use an LLM to generate slides directly in **TypeScript / TSX / React-style JSX**, keep the output browser-native, and structure the deck so it can be iterated like normal code instead of dragged around in a GUI slide editor.
 
-The key idea is that slides do not need a heavy GUI tool first. If the content structure is clear, an LLM can generate a compact slide deck as code quickly, and code-based slides are easy to revise, restyle, diff, version, and convert.
+The durable trick is not just “ask Claude for slides.” The real pattern is:
 
-Tracy’s specific note here is that **Claude is good at producing simple, clean slides this way**, and that **TSX is also easy to convert to HTML**.
+- write slides as **React/TSX artifacts**
+- use a **tight visual template**
+- keep styling inline and explicit
+- make the result easy to render as HTML and easy to revise in code
+
+For Tracy’s preferred variant, the deck should follow a fairly specific artifact style:
+
+- slides are shaped like `{ section, title, content: JSX }`
+- use an explicit palette object like `C={ blue:{bg,border,text,accent}, ... }`
+- use CSS vars for theming
+- use `Box` / `Arrow` SVG helpers with **hardcoded fills**, not className-driven SVG styling
+- include nav buttons, keyboard arrows, progress bar, and dot indicators
+- match a `pitch-deck.tsx` pattern: **section header + progress + title + content + nav footer**
+- keep tables, code blocks, and cards **inline styled**
+
+That makes the deck much more reproducible than ad hoc prompting.
 
 ## What it is used for
 
-Useful applications:
+This workflow is useful for:
 
-- **Fast first-draft slide decks** when the priority is clarity over fancy templates
-- **Research talk drafts** where content changes often and editing in code is easier than dragging boxes around
-- **Internal presentations** that need to be clean, lightweight, and easy to regenerate
-- **Agent-assisted presentation workflows** where an LLM can update slides from notes, markdown, or structured outlines
-- **HTML-native slide publishing** when the output should live on the web rather than inside PowerPoint/Keynote
-- **Version-controlled slides** where Git-friendly source matters
+- **fast first-draft decks** when the content matters more than fancy animation
+- **research talks / startup decks / tool demos** that need quick iteration
+- **agent-generated presentations** from notes, outlines, or docs
+- **HTML-native slide publishing**
+- **version-controlled decks** where Git diffs are useful
+- **reusable visual systems** where one template can support many decks
 
-This is especially good when:
-- the deck is text/diagram-heavy rather than animation-heavy
-- you want repeatable style
-- you may want the same source to produce both slides and web output
+It is especially good when:
+
+- you want simple, clean slides rather than PowerPoint maximalism
+- you expect the deck to evolve quickly
+- you want the same source to be editable by humans and coding agents
 
 ## Additional notes
 
-### Why this workflow is appealing
+### Claude-specific observation
 
-The main appeal is not novelty. It is leverage.
+The original trick here came from using **Claude Code** to generate slides. Tracy’s observation is that Claude is particularly good at producing **clean TS/TSX slides** without too much ugliness or overengineering.
 
-If the slides are written as TS / TSX:
-- layout can be templated
-- themes can be reused
-- content can be regenerated from notes or documents
-- HTML export becomes straightforward
-- later automation is easier than with manual slide-editing tools
+That tracks. Claude often does well on tasteful layout scaffolding, especially when the visual language is constrained up front.
 
-That makes it a good fit for Pocket Reads / cabbageland-style publishing pipelines, where content often starts as notes and later gets rendered into different surfaces.
+### Does Codex support native React / TS too?
 
-### Claude-specific observation from Tracy
+Yes — **absolutely in the practical sense**.
 
-Tracy’s note is that Claude can generate these code-based slides in a way that comes out **very simple and clean**, which is the right aesthetic for many quick decks.
+Codex does not need a special “slides mode” to do this. If the target is React / TS / TSX, Codex can generate and edit that natively as a coding workflow. So if the question is:
 
-### Codex comparison
+> can Codex do native React/TSX-based slide generation too?
 
-Tracy also asked whether **Codex has similar functionality**.
+The answer is **yes**.
 
-Practical answer: **yes, in the broad sense**. Codex can also generate TypeScript/TSX/HTML/CSS-based slide decks or slide components if prompted well. The difference is not that Codex has a magical “slides mode”; it is that it can act as a coding agent for the same code-first presentation workflow.
+More precisely:
 
-So the real reusable tool concept is:
-- use an LLM to generate or edit **slide source code**
-- keep output simple and web-native
-- render to HTML or another web-facing format
+- Codex can generate **React components**, **TSX**, **HTML/CSS**, and small app-style slide shells
+- it can work from a rigid template and preserve structure well
+- it is a good fit when the slide deck is really just a small React UI with pagination and presentation affordances
 
-Claude may currently feel especially good for quick tasteful drafts, but Codex can clearly participate in the same pipeline.
+So the difference is mostly one of workflow feel, not capability ceiling.
 
-### Relevant documents and links
+### The most reusable part of the trick
 
-Useful primary references for this workflow family:
+The strongest reusable part is the **template discipline**.
+
+If the prompt just says “make slides,” results get mushy.
+If the prompt says:
+
+- use React artifact format
+- use explicit palette constants
+- use fixed helper components
+- keep all content inline styled
+- structure each slide identically
+- include nav/progress/footer affordances
+
+then both Claude and Codex have a much better chance of producing something stable rather than chaotic.
+
+### Why the explicit palette / hardcoded SVG rule matters
+
+This is one of those tiny implementation details that saves a lot of ugliness.
+
+When SVG colors rely on className inheritance or loose CSS coupling, generated decks often break visually or become annoying to theme. Hardcoding fills in helpers like `Box` and `Arrow` is more boring, but much more robust for generated artifact-style slides.
+
+Likewise, a palette object like:
+
+```ts
+const C = {
+  blue: { bg: '#EAF2FF', border: '#B7CCFF', text: '#123A8C', accent: '#2E6BFF' },
+  green: { bg: '#EAF8EF', border: '#B7E0C2', text: '#1F6B3A', accent: '#2FA45A' },
+}
+```
+
+is much easier for an agent to use consistently than an abstract design system hidden elsewhere.
+
+### Good targets / neighboring tools
+
+This workflow can feed or resemble:
+
+- React artifact-style single-page decks
+- custom HTML slide apps
+- Reveal.js-style presentations
+- Spectacle / custom React presentation shells
+- TSX-to-static-export pipelines
+
+Primary references:
 
 - Claude: https://claude.ai/
-- Codex CLI / coding agent direction: https://github.com/openai/codex
-- TypeScript: https://www.typescriptlang.org/docs/
-- TSX docs (React-style TSX syntax reference lives through TypeScript + React ecosystems):
-  - https://www.typescriptlang.org/docs/handbook/jsx.html
-  - https://react.dev/learn/writing-markup-with-jsx
-- HTML reference:
-  - https://developer.mozilla.org/en-US/docs/Web/HTML
-
-Common slide frameworks / rendering targets worth considering for this workflow:
-
-- Slidev: https://sli.dev/
-- Marp: https://marp.app/
+- Codex: https://github.com/openai/codex
+- TypeScript JSX docs: https://www.typescriptlang.org/docs/handbook/jsx.html
+- React JSX docs: https://react.dev/learn/writing-markup-with-jsx
+- HTML reference: https://developer.mozilla.org/en-US/docs/Web/HTML
 - Reveal.js: https://revealjs.com/
 - Spectacle: https://spectacle.js.org/
+- Slidev: https://sli.dev/
+- Marp: https://marp.app/
 
-These are relevant because they provide realistic targets for “generate slides as code, then render cleanly in the browser.”
+## Recommendation
 
-### Recommendation
-
-Keep this as a **workflow card**, not as a claim about one special proprietary feature.
+Keep this as a **workflow card**, not a product card.
 
 The durable lesson is:
-- **LLM + TS/TSX + HTML slide rendering** is a useful fast-slide pipeline
-- Claude seems especially good for quick clean drafts
-- Codex can likely serve the same pattern when used as a coding agent
-- code-based slides are attractive because they are easy to revise, render, and republish
+
+- for “create slides with ts/tsx,” use a **React artifact slide template**
+- Claude is good at generating this style
+- Codex also supports native React / TSX generation and can use the same pattern
+- the template constraints matter more than the model branding
+
+If I were using this in practice, I would not start from a blank prompt every time. I would start from the same strict artifact skeleton and swap only the deck content.

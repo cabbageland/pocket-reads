@@ -3,14 +3,14 @@
 ## Basic info
 
 * Title: Learning Knowledge Graph World Models with Episodic Memory for LLM Agents
-* Authors: Petr Anokhin, Ekaterina Churina, Dmitry Kalinin, Gleb Kazakov, Nikita Kurenkov, Denis Dimitrov, Andrey Panchenko, Artem Shelmanov
+* Authors: Petr Anokhin, Nikita Semenov, Artyom Sorokin, Dmitry Evseev, Andrey Kravchenko, Mikhail Burtsev, Evgeny Burnaev
 * Year: 2025
-* Venue / source: arXiv preprint (cs.AI)
-* Link: https://arxiv.org/abs/2407.04363
-* PDF: https://arxiv.org/pdf/2407.04363
-* DOI: https://doi.org/10.48550/arXiv.2407.04363
-* Date read: 2026-04-09
-* Date surfaced: 2026-04-09
+* Venue / source: IJCAI 2025 / extended arXiv version
+* Link: https://www.ijcai.org/proceedings/2025/2
+* PDF: https://www.ijcai.org/proceedings/2025/0002.pdf
+* ArXiv: https://arxiv.org/abs/2407.04363
+* Date read: 2026-04-14
+* Date surfaced: 2026-04-14
 * Surfaced via: Tracy in #pocket-reads
 * Why selected in one sentence: It tries to make agent memory more world-model-like by combining a dynamic knowledge graph with episodic memory for text-game agents.
 
@@ -59,15 +59,15 @@ The Ariadne agent then uses that evolving graph in planning and action selection
 The motivation is solid. Complex decision-making often depends less on remembering raw wording and more on maintaining a structured estimate of the world. If an agent needs to solve text adventures or long-horizon tasks, it should know not just “what text appeared before,” but “what objects exist, how they relate, where they are, and what happened recently.”
 
 ### 4. What data does it use?
-The paper evaluates mainly in **interactive text-game environments** designed to be difficult even for humans, and also includes a static multi-hop QA setting for comparison. The main point is to test graph memory under partial observability and sequential decision-making, where memory structure should matter.
+The paper evaluates in **interactive text-game environments** that stress long-horizon memory and exploration, specifically TextWorld Cooking and Treasure Hunter tasks plus NetHack, and also includes static multi-hop QA benchmarks such as MuSiQue and HotpotQA for comparison. The main point is to test graph memory under partial observability and sequential decision-making, where memory structure should matter.
 
 ### 5. How is it evaluated?
-The paper compares AriGraph/Ariadne against alternative memory methods and RL baselines on game tasks of varying complexity, and also checks whether the approach remains competitive on static QA. That dual evaluation is useful because it tests whether the memory representation is only good for games or more generally useful for relational reasoning.
+The paper compares AriGraph/Ariadne against alternative memory methods such as full history, summarization, RAG, Reflexion, and Simulacra, and against RL baselines on Cooking-style game tasks of varying difficulty. It also checks whether the same memory design remains competitive on static QA against graph-based and retrieval-heavy baselines like ReadAgent, GraphReader, HOLMES, and GraphRAG. That dual evaluation is useful because it tests whether the memory representation is only good for games or more generally useful for relational reasoning.
 
 ### 6. What are the main results?
-The claimed result is that AriGraph-based agents substantially outperform other memory approaches and strong RL baselines in complex text-game settings, while remaining competitive with knowledge-graph QA methods on static multi-hop question answering.
+The results are fairly strong for the intended setting. In text-game environments, Ariadne with AriGraph beats alternative LLM-memory baselines and does especially well on harder long-horizon Cooking variants, while also showing performance competitive with or better than strong RL baselines on the simplified Cooking benchmark. The IJCAI version also reports that Ariadne with partial room observations in NetHack performs comparably to a baseline with much stronger level-level observation access, which is a nice sanity check that the learned memory graph is doing real state-reconstruction work. On multi-hop QA, AriGraph is competitive rather than dominant: it beats several strong QA baselines and is cheaper than GraphRAG, but HOLMES still edges it out on some GPT-4 settings.
 
-The most plausible and interesting result is not the exact leaderboard number; it is that **graph memory helps most when the task really needs world-state reasoning** rather than just retrieval of past text.
+The most interesting result is not one exact number; it is that **graph memory helps most when the task really needs world-state reasoning, navigation, and long-horizon recall**, not just retrieval of past text.
 
 ### 7. What is actually novel?
 The novelty is not “use a graph” in the abstract. It is the combination of:
@@ -85,7 +85,7 @@ That is more interesting than a normal “knowledge graph for QA” paper becaus
 - It points toward memory as something agents reason over, not merely retrieve from.
 
 ### 9. What are the weaknesses, limitations, or red flags?
-- The exact contribution is somewhat entangled with the rest of the agent stack.
+- The exact contribution is somewhat entangled with the rest of the agent stack, since Ariadne includes memory retrieval, planning, and decision modules rather than isolating one tiny memory primitive.
 - Like many agent papers, results may depend on prompting and systems details that are harder to transfer cleanly than the paper’s conceptual framing suggests.
 - Graph construction errors can easily propagate and poison downstream planning.
 - Interactive-game success does not automatically imply broad real-world agent robustness.

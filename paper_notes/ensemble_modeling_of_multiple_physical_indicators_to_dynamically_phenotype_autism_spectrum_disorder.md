@@ -7,9 +7,11 @@
 * Year: 2025
 * Venue / source: Algorithms (MDPI)
 * Link: https://www.mdpi.com/1999-4893/18/12/764
-* Date read: 2026-04-09
-* Date surfaced: 2026-04-09
-* Surfaced via: Tracy in #pocket-reads
+* PDF: https://doi.org/10.3390/a18120764
+* DOI: https://doi.org/10.3390/a18120764
+* Date read: 2026-04-14
+* Date surfaced: 2026-04-14
+* Surfaced via: Tracy in #pocket-reads (attached PDF)
 * Why selected in one sentence: It tests whether home-video behavioral channels like gaze, head pose, and facial expression can be fused into a more scalable autism phenotyping pipeline.
 
 ## Quick verdict
@@ -69,7 +71,7 @@ The motivation is reasonable. Clinical diagnosis is expensive and delayed, and n
 ### 4. What data does it use?
 The data come from the **GuessWhat** mobile game, which records parent–child interaction videos at home. The paper says the broader collection includes **3000+ videos from 382 children**, but after filtering, balancing choices, and feature-availability constraints, the final modeled dataset is only **688 videos**.
 
-That shrinkage matters a lot. The paper is really about what can be salvaged from a noisy real-world mobile-video pipeline, not about training on a giant clean dataset.
+More specifically, the filtering pipeline starts from 3113 raw videos, keeps 2123 after video-quality and child-visibility filtering, then reduces to 700 after balancing ASD/no-ASD ratio and limiting superusers, and finally lands at 688 after dropping videos without enough usable engineered features. That shrinkage matters a lot. The paper is really about what can be salvaged from a noisy real-world mobile-video pipeline, not about training on a giant clean dataset.
 
 ### 5. How is it evaluated?
 The paper evaluates:
@@ -89,7 +91,7 @@ The main results are pretty clear:
 - **late fusion** improves performance further to about **0.90** AUC,
 - **intermediate fusion** and **early fusion** perform badly relative to late fusion.
 
-The paper also reports that feature engineering helps most for the eye model, and that late fusion gives the best balance of performance and fairness metrics among their tested setups.
+Feature engineering matters a lot, especially for the eye model, which jumps from about 0.66 AUC before feature engineering to 0.86 after. The best trimodal late-fusion averaging model reaches about **0.90 AUC** with **0.82 accuracy** and **0.77 macro F1**, while an eye+face late-fusion linear model also reaches **0.90 AUC** and even slightly better weighted metrics in some settings. On fairness, the paper argues late fusion gives a better performance/fairness balance than the unimodal models, but the confidence intervals are wide enough that this should be treated as encouraging rather than conclusive.
 
 ### 7. What is actually novel?
 The novelty is mostly in the applied integration:
@@ -106,6 +108,7 @@ The modeling itself is not especially novel. This is more of an engineering/clin
 - The multimodal framing is sensible, and the late-fusion result is believable.
 - It includes fairness and net-benefit analyses rather than stopping at AUC.
 - The behavioral channels are reasonably interpretable compared with end-to-end black-box video classification.
+- It is explicit about consent, IRB process, clinician cross-checking, and the need for parent report to match blinded clinician impression before a video enters the analytic set.
 
 ### 9. What are the weaknesses, limitations, or red flags?
 - The final dataset is small after filtering, which caps confidence.
@@ -114,6 +117,8 @@ The modeling itself is not especially novel. This is more of an engineering/clin
 - Fairness claims are underpowered because some subgroups are tiny.
 - Using AWS Rekognition as a major upstream dependency means the system inherits whatever biases and quirks that extractor has.
 - The paper is about **phenotyping/screening support**, but the topic area is sensitive enough that readers could easily overread it as stronger diagnostic readiness than the evidence supports.
+- The retained dataset has heavy skew: even after balancing, the ASD/no-ASD ratio is still about 5:1, and male/female videos are still about 3:1.
+- The youngest age groups and female subgroup are explicitly small enough that the fairness intervals get pretty wobbly.
 
 ### 10. What challenges or open problems remain?
 A big one is generalization: does this work outside the carefully filtered subset, across devices, across family behavior patterns, and across more balanced demographic groups? Another is whether these behavioral proxies remain stable enough for trustworthy deployment. There is also the more basic question of how much signal is actually autism-specific versus correlated with recording conditions, child age, task style, or app usage patterns.
@@ -124,6 +129,7 @@ A big one is generalization: does this work outside the carefully filtered subse
 - Better handling of multiple faces and child re-identification instead of simply discarding many videos.
 - More careful external validation and prospective studies.
 - Better analysis of what the models are actually using, especially to separate behavioral signal from video-quality artifacts.
+- On-device inference pipelines, which the paper hints are feasible via Google ML Kit plus a lightweight downstream behavioral model.
 
 ### 12. Why does this matter?
 Because scalable developmental screening is a real problem, and mobile video is one of the few plausible low-friction data sources that could reach families outside specialist clinics. Even if this paper is still very proof-of-concept, the direction is meaningful.
@@ -137,6 +143,7 @@ The good instinct in this paper is not the specific network choice. It is the at
 - Heavy filtering and explicit feature engineering may still be the right move when the raw signal is noisy and datasets are small.
 - Real-world digital phenotyping needs fairness and clinical-utility analysis, not just classification metrics.
 - Interpretable behavioral channels can be more useful than an end-to-end black-box story when deployment stakes are high.
+- In sensitive health settings, data curation and validation protocol may matter as much as model class.
 
 ## Final decision
 Tentative keep.

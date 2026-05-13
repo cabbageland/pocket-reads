@@ -86,15 +86,33 @@ Recommended front matter fields:
    - Repository-grade notes should come from an actual paper read: PDF, arXiv/OpenReview text, or equivalent paper source.
    - If only project-page / abstract-level / social-post access exists, the note must say so explicitly.
 
-3. **Short/shallow notes are unfinished work.**
+3. **Full text is the default, not a bonus.**
+   - For every paper note you seriously consider preserving here, aggressively try to get the full text before relying on an abstract, project page, or social post.
+   - Minimum requirement before falling back to abstract-only or partial-access inspection: make at least 10 distinct full-text acquisition attempts.
+   - These attempts should span different access paths when possible, not the same failed click repeated 10 times.
+   - Valid attempt categories include publisher landing page, direct PDF URL guess, DOI landing page, PubMed links, PMC / Europe PMC, arXiv / OpenReview / preprint versions, author manuscript search, lab page, Brave / Google Scholar PDF search, open-access lookup surfaces, institutional browser access, and mirrored accessible versions.
+   - Abstract-only or landing-page-only inspection is allowed only when those 10 real attempts still fail in the current environment.
+   - If fallback is necessary, say that 10 full-text attempts were made first, state the access limits explicitly, and lower confidence accordingly.
+
+4. **Do not imply a deep read if you did not do one.**
+   - "Inspected" should mean full text unless clearly qualified.
+   - If the read was abstract-only, say "abstract-only inspection" explicitly.
+   - If the read was partial full text, say which parts were actually inspected.
+   - Never silently turn a failed full-text search into a normal-sounding canonical note.
+
+5. **Prefer accessible full-text papers when choosing what to preserve.**
+   - If two papers are similarly interesting, prefer the one with accessible full text.
+   - Do not preserve a weak abstract-level note when a better full-text paper is available.
+
+6. **Short/shallow notes are unfinished work.**
    - If a note is mostly one-line answers, abstract paraphrase, or vague claims without method detail, it is not done.
    - Deepen it from the paper before considering the repo task complete.
 
-4. **Be honest about access.**
+7. **Be honest about access.**
    - If exact loss / architecture / dataset / results details are unclear, say so.
    - If the real paper cannot be confidently resolved, keep the note clearly labeled as unresolved / partial-access rather than bluffing.
 
-5. **Prefer one canonical note per paper.**
+8. **Prefer one canonical note per paper.**
    - Avoid duplicate `via X` variants once the real paper has been resolved.
    - Merge provenance into the canonical note instead of keeping social-link duplicates.
 

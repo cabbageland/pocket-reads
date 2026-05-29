@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-26T18:03:41.739759+00:00",
+  "generatedAt": "2026-05-29T23:15:13.457912+00:00",
   "repo": "cabbageland/pocket-reads",
   "collections": [
     {
@@ -20,7 +20,7 @@
           "year": "2026",
           "venue": "RSS 2026 / arXiv preprint (cs.RO)",
           "dateRead": "2026-05-26",
-          "addedAt": "2026-05-26T18:03:29.293892+00:00",
+          "addedAt": "2026-05-26T11:03:57-07:00",
           "paperUrl": "https://arxiv.org/abs/2602.10101",
           "pdfUrl": "",
           "verdict": "Strong, practical embodied-perception paper",

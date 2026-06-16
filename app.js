@@ -436,7 +436,8 @@ async function init() {
     renderNotes();
   });
 
-  const res = await fetch('./data/content.json');
+  const res = await fetch('./data/content.json', { cache: 'no-store' });
+  if (!res.ok) throw new Error(`content fetch failed: ${res.status}`);
   state.content = await res.json();
   if (!getCollections().some((collection) => collection.id === state.activeCollectionId)) {
     state.activeCollectionId = getCollections()[0]?.id || 'papers';

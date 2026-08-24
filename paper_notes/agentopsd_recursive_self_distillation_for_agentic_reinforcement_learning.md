@@ -30,6 +30,7 @@ tags: agent-rl, reinforcement-learning, agentic-rl, grpo, opsd, self-distillatio
 * Date surfaced: 2026-08-24
 * Surfaced via: Tracy via Pocket Reads command
 * Code / repo: https://github.com/ZethWang/AgentOPSD
+* Study note / walkthrough: [AgentOPSD, worked through](../study_notes/agentopsd-explained.html)
 * Why selected in one sentence: It tries to fix the exact failure mode where sparse terminal rewards smear credit across long agent trajectories.
 
 ## Quick verdict

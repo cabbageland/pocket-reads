@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgentOPSD, worked through — recursive self-distillation for agentic RL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,300..600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F0F7;
+  --paper-2:#E8E5F1;
+  --ink:#171334;
+  --ink-soft:#514B78;
+  --ink-faint:#8C86AC;
+  --rule:#D3CEE3;
+  --up:#0F7264;
+  --up-soft:#D5EBE6;
+  --down:#A82F5B;
+  --down-soft:#F6DDE6;
+  --accent:#4B3FD9;
+  --accent-soft:#E0DDFA;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+  --body:"Newsreader",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --maxw:44rem;
+  --wide:64rem;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--body); font-size:1.0625rem; line-height:1.62;
+  font-variant-numeric:oldstyle-nums;
+}
+.wrap{max-width:var(--wide); margin:0 auto; padding:0 1.5rem}
+.col{max-width:var(--maxw); margin:0 auto}
+
+/* ---------- masthead ---------- */
+header.top{padding:4.5rem 0 2.5rem; border-bottom:1px solid var(--rule)}
+.eyebrow{
+  font-family:var(--mono); font-size:.7rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--ink-faint); margin:0 0 1.4rem;
+}
+h1{
+  font-family:var(--display); font-weight:700; font-stretch:88%;
+  font-size:clamp(2.4rem,7vw,4.3rem); line-height:.98; letter-spacing:-.02em;
+  margin:0 0 1.1rem; text-wrap:balance;
+}
+h1 em{font-style:normal; color:var(--accent)}
+.standfirst{font-size:1.2rem; line-height:1.5; color:var(--ink-soft); max-width:34rem; margin:0 0 2rem}
+.meta{
+  font-family:var(--mono); font-size:.76rem; line-height:1.9; color:var(--ink-soft);
+  display:grid; grid-template-columns:8.5rem 1fr; gap:0 1rem; max-width:38rem;
+}
+.meta dt{color:var(--ink-faint); text-transform:uppercase; letter-spacing:.08em; font-size:.68rem}
+.meta dd{margin:0}
+.meta a{color:var(--accent); text-decoration:none; border-bottom:1px solid var(--accent-soft)}
+.meta a:hover{border-bottom-color:var(--accent)}
+
+/* ---------- sections ---------- */
+section{padding:3.4rem 0; border-bottom:1px solid var(--rule)}
+h2{
+  font-family:var(--display); font-weight:700; font-stretch:88%;
+  font-size:clamp(1.5rem,3.4vw,2.1rem); line-height:1.08; letter-spacing:-.015em;
+  margin:0 0 .5rem; text-wrap:balance;
+}
+h2 .tag{
+  display:block; font-family:var(--mono); font-weight:500; font-size:.68rem;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:.7rem;
+}
+h3{
+  font-family:var(--display); font-weight:600; font-stretch:92%;
+  font-size:1.12rem; letter-spacing:-.005em; margin:2.2rem 0 .5rem;
+}
+h4{font-family:var(--mono); font-size:.74rem; letter-spacing:.12em; text-transform:uppercase;
+   color:var(--ink-faint); font-weight:600; margin:1.8rem 0 .6rem}
+p{margin:0 0 1.05rem}
+.lede{font-size:1.14rem; color:var(--ink-soft); margin-bottom:1.6rem}
+strong{font-weight:600}
+code{font-family:var(--mono); font-size:.86em; background:var(--paper-2); padding:.1em .34em; border-radius:3px}
+ul,ol{margin:0 0 1.1rem; padding-left:1.3rem}
+li{margin-bottom:.5rem}
+a{color:var(--accent)}
+
+/* ---------- equation cards ---------- */
+.eq{
+  background:#fff; border:1px solid var(--rule); border-left:3px solid var(--accent);
+  padding:1.05rem 1.2rem; margin:1.3rem 0; border-radius:2px;
+}
+.eq .label{font-family:var(--mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-faint); margin-bottom:.5rem}
+.eq .math{font-family:var(--mono); font-size:.94rem; line-height:1.75; overflow-x:auto; white-space:pre; color:var(--ink)}
+.eq .gloss{font-size:.94rem; color:var(--ink-soft); margin:.7rem 0 0; line-height:1.55}
+
+/* ---------- callouts ---------- */
+.note{
+  border-left:3px solid var(--ink-faint); padding:.15rem 0 .15rem 1.1rem;
+  margin:1.4rem 0; color:var(--ink-soft); font-size:.98rem;
+}
+.note strong{color:var(--ink)}
+.warn{border-left-color:var(--down)}
+.warn strong{color:var(--down)}
+
+/* ---------- transcript ---------- */
+.transcript{
+  background:#fff; border:1px solid var(--rule); border-radius:2px;
+  font-family:var(--mono); font-size:.79rem; line-height:1.6; margin:1.4rem 0;
+  overflow:hidden;
+}
+.transcript .head{
+  background:var(--ink); color:var(--paper); padding:.55rem .9rem;
+  font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+}
+.transcript .rows{padding:.5rem 0}
+.trow{display:grid; grid-template-columns:2.1rem 1fr; gap:.6rem; padding:.42rem .9rem}
+.trow + .trow{border-top:1px dotted var(--rule)}
+.tn{color:var(--ink-faint); font-size:.7rem; padding-top:.15rem}
+.act{color:var(--accent); font-weight:500}
+.obs{color:var(--ink-soft); display:block; margin-top:.15rem}
+.skillbox{
+  background:var(--accent-soft); border:1px solid #C9C3F5; border-radius:2px;
+  padding:.9rem 1.1rem; margin:1.3rem 0; font-family:var(--mono); font-size:.78rem; line-height:1.65;
+  color:#2A2270;
+}
+.skillbox .label{font-size:.64rem; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:.45rem; font-weight:600}
+
+/* ---------- the machine (signature) ---------- */
+.machine{
+  background:#fff; border:1px solid var(--rule); border-radius:3px;
+  padding:1.5rem; margin:2rem 0;
+  box-shadow:0 1px 0 var(--rule), 0 14px 34px -26px rgba(23,19,52,.4);
+}
+.controls{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr)); gap:1rem 1.4rem;
+  padding-bottom:1.3rem; margin-bottom:1.3rem; border-bottom:1px solid var(--rule);
+}
+.ctrl label{
+  display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--mono); font-size:.68rem; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ink-faint); margin-bottom:.4rem;
+}
+.ctrl label b{font-size:.86rem; color:var(--ink); letter-spacing:0; text-transform:none; font-weight:600}
+input[type=range]{width:100%; accent-color:var(--accent); height:1.1rem}
+.seg{display:flex; border:1px solid var(--rule); border-radius:2px; overflow:hidden}
+.seg button{
+  flex:1; border:0; background:#fff; color:var(--ink-soft); cursor:pointer;
+  font-family:var(--mono); font-size:.7rem; padding:.42rem .2rem; letter-spacing:.04em;
+}
+.seg button[aria-pressed=true]{background:var(--ink); color:var(--paper)}
+.seg button + button{border-left:1px solid var(--rule)}
+.seg button:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+
+.readout{
+  display:flex; flex-wrap:wrap; gap:1.6rem; font-family:var(--mono); font-size:.74rem;
+  color:var(--ink-faint); margin-bottom:1.2rem;
+}
+.readout span b{display:block; font-size:1.02rem; color:var(--ink); letter-spacing:-.01em; margin-top:.15rem}
+
+svg{display:block; width:100%; height:auto}
+.charttitle{font-family:var(--mono); font-size:.66rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--ink-faint); margin:1.4rem 0 .5rem}
+
+/* ---------- ledger table ---------- */
+.scroller{overflow-x:auto; -webkit-overflow-scrolling:touch; margin:0 -1.5rem; padding:0 1.5rem}
+table{border-collapse:collapse; width:100%; font-family:var(--mono); font-size:.76rem; min-width:40rem}
+th{
+  text-align:right; font-weight:600; font-size:.63rem; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--ink-faint); padding:.5rem .5rem .45rem; border-bottom:1px solid var(--ink);
+  white-space:nowrap;
+}
+th:first-child,td:first-child{text-align:left}
+td{padding:.42rem .5rem; border-bottom:1px solid var(--rule); text-align:right; white-space:nowrap}
+tbody tr:hover{background:var(--paper-2)}
+.pos{color:var(--up)} .neg{color:var(--down)}
+.dim{color:var(--ink-faint)}
+.pill{display:inline-block; padding:.06em .42em; border-radius:2px; font-size:.72rem}
+.pill.up{background:var(--up-soft); color:var(--up)}
+.pill.dn{background:var(--down-soft); color:var(--down)}
+.evcell input{
+  width:4.2rem; font-family:var(--mono); font-size:.76rem; text-align:right;
+  border:1px solid var(--rule); background:var(--paper); border-radius:2px; padding:.16rem .3rem; color:var(--ink);
+}
+.evcell input:focus{outline:2px solid var(--accent); outline-offset:-1px; background:#fff}
+caption{caption-side:bottom; text-align:left; font-family:var(--body); font-size:.9rem;
+  color:var(--ink-soft); padding-top:.9rem; line-height:1.5}
+
+/* ---------- results tables ---------- */
+/* ---------- glossary ---------- */
+table.gloss{font-size:.8rem; min-width:56rem}
+table.gloss th{text-align:left; vertical-align:bottom}
+table.gloss td{text-align:left; vertical-align:top; white-space:normal; padding:.7rem .7rem}
+table.gloss td.sym{white-space:nowrap; width:8.5rem; border-right:1px solid var(--rule)}
+table.gloss td.sym b{font-size:1.02rem; color:var(--accent); display:block}
+table.gloss td.sym span{font-family:var(--body); font-size:.86rem; color:var(--ink-faint); line-height:1.3; display:block; margin-top:.15rem}
+table.gloss td.frm{font-size:.73rem; line-height:1.65; color:var(--ink); width:13rem}
+table.gloss td.rng{font-size:.72rem; color:var(--ink-soft); width:9rem}
+table.gloss td.what{font-family:var(--body); font-size:.94rem; line-height:1.5; min-width:17rem}
+table.gloss td.dep{font-size:.72rem; color:var(--ink-soft); width:11rem; line-height:1.6}
+table.gloss tr.pivot td{background:var(--accent-soft)}
+table.gloss tr.pivot td.sym b{color:#2A2270}
+.channel{
+  background:var(--ink); color:var(--paper); border-radius:2px;
+  padding:1.2rem 1.3rem; margin:1.6rem 0; overflow-x:auto;
+}
+.channel pre{margin:0; font-family:var(--mono); font-size:.75rem; line-height:1.75; white-space:pre}
+.channel .v{color:#7FE3CF} .channel .t{color:#B7AEFF} .channel .j{color:#FFC46B}
+.chlegend{display:flex; gap:1.4rem; flex-wrap:wrap; margin-top:.9rem; font-family:var(--mono); font-size:.68rem; letter-spacing:.06em; color:#9A93BF}
+.chlegend b{font-weight:500}
+table.results{font-size:.78rem}
+table.results td.name{font-family:var(--body); font-size:.95rem; text-align:left}
+table.results tr.hero td{background:var(--accent-soft); font-weight:600}
+table.results tr.hero td.name{color:var(--accent)}
+
+/* ---------- pipeline ---------- */
+.pipe{counter-reset:step; margin:1.6rem 0; padding:0; list-style:none}
+.pipe > li{
+  position:relative; padding:0 0 1.5rem 3.2rem; margin:0;
+  border-left:1px solid var(--rule); margin-left:.85rem;
+}
+.pipe > li:last-child{border-left-color:transparent; padding-bottom:0}
+.pipe > li::before{
+  counter-increment:step; content:counter(step,decimal-leading-zero);
+  position:absolute; left:-.85rem; top:-.15rem; width:1.7rem; height:1.7rem;
+  background:var(--ink); color:var(--paper); border-radius:50%;
+  font-family:var(--mono); font-size:.64rem; display:flex; align-items:center; justify-content:center;
+}
+.pipe h3{margin:0 0 .3rem; font-size:1.02rem}
+.pipe p{margin:0 0 .5rem; font-size:.97rem}
+.pipe .kv{font-family:var(--mono); font-size:.73rem; color:var(--ink-faint); line-height:1.7}
+
+/* ---------- misc ---------- */
+.two{display:grid; grid-template-columns:1fr 1fr; gap:1.4rem}
+@media(max-width:640px){.two{grid-template-columns:1fr}}
+footer{padding:3rem 0 5rem; font-family:var(--mono); font-size:.73rem; color:var(--ink-faint); line-height:1.8}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+.slope{display:flex; align-items:center; gap:.6rem; font-family:var(--mono); font-size:.75rem; margin:.3rem 0}
+.slope .bar{height:.68rem; background:var(--down); border-radius:1px}
+.slope .bar.best{background:var(--up)}
+.slope .nm{width:8.5rem; color:var(--ink-soft); text-align:right; flex:none}
+.slope .val{color:var(--ink-faint); flex:none}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="col">
+    <p class="eyebrow">Paper walkthrough · arXiv 2608.05987v1</p>
+    <h1>A local gap is not <em>sequential credit</em></h1>
+    <p class="standfirst">AgentOPSD turns a self-distillation log-probability gap into a running Bayesian belief about whether the episode will succeed — and pays each turn by how much it <em>moved</em> that belief.</p>
+    <dl class="meta">
+      <dt>Title</dt><dd>AgentOPSD: Recursive Self-Distillation for Agentic Reinforcement Learning</dd>
+      <dt>Authors</dt><dd>Wang, Lu, Yao, Wu, Wu, Cai, Sun, Ye, Hao, Gu, Cai, Shen, Yang — Tsinghua / Zhejiang / Meituan</dd>
+      <dt>Posted</dt><dd>6 Aug 2026 · cs.AI</dd>
+      <dt>Paper</dt><dd><a href="https://arxiv.org/abs/2608.05987">arxiv.org/abs/2608.05987</a></dd>
+      <dt>Code</dt><dd><a href="https://github.com/ZethWang/AgentOPSD">ZethWang/AgentOPSD</a> — README only, "code coming soon" (3 commits, no source)</dd>
+      <dt>Headline</dt><dd>89.1% ALFWorld success, Qwen2.5-7B-Instruct</dd>
+    </dl>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<section>
+<div class="col">
+  <h2><span class="tag">Motivation</span>Everything in the trajectory gets paid the same</h2>
+  <p class="lede">ALFWorld hands you one bit at the very end: did you put the clean mug in the coffee machine or not. Fifty turns of decisions, one scalar.</p>
+
+  <p>GRPO's answer is to sample a group of <code>G</code> trajectories for the same task, standardize their binary rewards into a group-relative advantage, and then <strong>broadcast that single number to every token in the trajectory</strong>. If the episode succeeded, every action in it gets pushed up equally — including the three turns you spent opening the wrong cabinet. If it failed, every action gets pushed down equally — including the correct reasoning that got you 90% of the way there.</p>
+
+  <p>The paper's framing is that this is not just imprecise, it is <em>increasingly</em> imprecise. The longer the horizon, the more decisions one broadcast scalar has to cover, and the more of the update is noise. Their Figure 1(b) measures this directly: regress per-sub-task success on the mean number of turns those episodes take, and read off how many success points you lose per extra turn. GRPO loses 2.91; RLSD loses 3.59.</p>
+
+  <h3>The complementary line: self-distillation gaps</h3>
+  <p>A separate body of work gets denser supervision without a critic. You run the <em>same</em> model twice on the <em>same</em> tokens the student just generated — once plain, once with privileged context that is only available at training time. The difference in log-probability is a free, dense, per-token signal about which tokens the privileged view considers characteristic.</p>
+  <p>Here the privileged context <code>c⁺</code> is a retrieved <strong>skill</strong> — a short text description of subgoals and action patterns for this task family, pulled by keyword matching from the SkillBank of SkillRL. It appears only in the teacher forward pass during training. It is never in the rollout prompt and never at inference.</p>
+
+  <h3>The two mismatches AgentOPSD claims to fix</h3>
+  <ul>
+    <li><strong>Granularity.</strong> The gap is per-token, but agentic environments don't respond per token. Many tokens jointly form one action, and the environment only speaks at turn boundaries. A token-level signal fragments a single decision.</li>
+    <li><strong>Isolation.</strong> Even the step-aware prior work (StepOPSD) scores each turn by its own local log-ratio. But whether a turn <em>matters</em> depends on what already happened. "Take the mug" is decisive when you have no mug and no idea where one is. The identical action is near-worthless as evidence once you've already established the mug is in cabinet 1.</li>
+  </ul>
+
+  <div class="note">
+    <strong>The thesis in one sentence.</strong> The credit of a turn is not its local signal, but how much that signal <em>revises</em> the estimated probability of eventual success. That framing makes credit a Bayesian belief update, and belief updates are naturally recursive.
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+<div class="col">
+  <h2><span class="tag">The machinery</span>Five equations, in order</h2>
+  <p class="lede">Nothing here needs a value network, a reward model, or a single extra rollout. The entire cost over GRPO is one additional forward pass per trajectory.</p>
+
+  <h4>1 · What we'd want, but can't have</h4>
+  <div class="eq">
+    <div class="label">Eq. 3 — the ideal Bayes factor</div>
+    <div class="math">logit p(C | s_k, a_k) − logit p(C | s_k)  =  log [ p(a_k | s_k, C) / p(a_k | s_k, ¬C) ]</div>
+    <p class="gloss"><code>C</code> is the event "this trajectory eventually succeeds." The left side is exactly the change in belief about success caused by taking action <code>a_k</code>. The right side says that change equals the log-ratio of how likely <code>a_k</code> is under success-behavior versus failure-behavior. Both outcome-conditional distributions are unavailable, so this is a target, not a computation.</p>
+  </div>
+
+  <h4>2 · The computable stand-in</h4>
+  <div class="eq">
+    <div class="label">Eq. 4–6 — token contrast, summed to a turn</div>
+    <div class="math">h_k,t  = (s_k,      y_k,&lt;t)          ← student context
+h⁺_k,t = (s_k, c⁺, y_k,&lt;t)          ← teacher context, skill injected
+
+δ_k,t = log π_θ(y_k,t | h⁺_k,t) − log π_θ(y_k,t | h_k,t)
+
+e_k = Σ_t δ_k,t = log [ π_θ(a_k | s_k, c⁺) / π_θ(a_k | s_k) ]</div>
+    <p class="gloss">Same parameters <code>θ</code> in both branches — this is self-distillation, not a bigger teacher. Both branches score the tokens the student already sampled, so the sum telescopes into a clean action-level log-ratio. <strong>This is the fix for mismatch #1</strong>: sum over exactly the tokens of one action, then stop, because that's where the environment answers. The whole thing is detached (<code>sg[·]</code>) — no gradient flows through it.</p>
+  </div>
+
+  <div class="note warn">
+    <strong>Read Appendix A.1 before you trust the Bayes story.</strong> The approximation needs two assumptions: (A1) the skill-conditioned branch really is success-conditional behaviour, and (A2) the unconditioned marginal is failure-dominated, which only holds in the limit where success is <em>rare</em> (ρ<sub>k</sub> → 0). Late in training on ALFWorld, success is common, so A2 is plainly violated. The authors hedge accordingly: under A1 alone <code>e_k</code> is pointwise mutual information, positive exactly when the action raises the posterior success probability — and the correction term is monotone, so the <em>sign and ranking</em> survive even when the magnitude doesn't. AgentOPSD only ever uses sign and ranking. Calling <code>B_k</code> a probability is a convenient fiction; it's relative support.
+  </div>
+
+  <h4>3 · The recursion — this is the actual contribution</h4>
+  <div class="eq">
+    <div class="label">Eq. 8–9 — belief state in log-odds space</div>
+    <div class="math">B_0 = clip(R̄, ε, 1−ε)        c_0 = 0        ℓ_0 = logit(B_0)
+
+c_k = γ·c_{k−1} + e_k
+ℓ_k = logit(B_0) + c_k        B_k = σ(ℓ_k)
+
+ΔB_k = B_k − B_{k−1}  ≈  B_{k−1}(1 − B_{k−1}) · [ e_k − (1−γ)·c_{k−1} ]</div>
+    <p class="gloss">Three things are doing work here, and the ablations separate all three.</p>
+  </div>
+
+  <ul>
+    <li><strong>The prior <code>B₀ = R̄</code>.</strong> The group success rate — GRPO's own group mean, reused. It is the MLE of task difficulty under a Binomial likelihood (Prop. 7), and it's free: you already computed it for the advantage. Crucially it also sets <em>where on the sigmoid you start</em>, and therefore how sensitive early turns are.</li>
+    <li><strong>The decayed accumulator <code>c_k</code>.</strong> The net new evidence at turn <code>k</code> is <code>e_k − (1−γ)c_{k−1}</code>: your fresh evidence minus the decayed carry-over. At γ=1 this is the undiscounted log-likelihood-ratio accumulation of Wald's sequential test. At γ&lt;1 the state is recency-weighted, so evidence from thirty turns ago stops pinning the support level.</li>
+    <li><strong>The sensitivity gate <code>B(1−B)</code>.</strong> This falls straight out of the sigmoid derivative. Evidence has maximum effect at <code>B = ½</code> and vanishes as belief saturates toward 0 or 1. <strong>This is the fix for mismatch #2</strong>: the same <code>e_k</code> produces a large <code>ΔB_k</code> when the outcome is genuinely open, and a negligible one once the state already points somewhere.</li>
+  </ul>
+
+  <h4>4 · Aligning the revision with the verifier</h4>
+  <div class="eq">
+    <div class="label">Eq. 10 — outcome-aligned credit</div>
+    <div class="math">q_k = sign(A_seq) · ΔB_k</div>
+    <p class="gloss">Magnitude says <em>how much</em> the turn revised support. Sign records <em>whether that revision agreed with what actually happened</em>. In a successful episode, a turn that raised belief is consistent — amplify it. In a failed episode, a turn that raised belief was misleading confidence — the sign flip means the turns that <em>dropped</em> belief get the amplified penalty instead. Drop this sign and you keep only "where did belief move," losing all information about whether the move was right. The ablation costs 8.6 points.</p>
+  </div>
+
+  <h4>5 · Reshaping, bounded</h4>
+  <div class="eq">
+    <div class="label">Eq. 11–12 — standardize, clip, mix</div>
+    <div class="math">z_k = (q_k − μ_q) / (σ_q + ε)          ← standardized WITHIN the trajectory
+w_k = clip(1 + b·z_k, 1−b, 1+b)        ← b = 0.2
+Ã_k = A_seq · [ (1−λ) + λ·w_k ]        ← λ = 0.5
+
+L = clipped-PPO surrogate with Ã_{κ(t)} per token  +  β·KL</div>
+    <p class="gloss">Every token inherits its turn's <code>Ã</code>. Because <code>z</code> is standardized inside the trajectory it has mean zero, so this is a <em>redistribution</em> of advantage mass across turns, not an injection of extra magnitude.</p>
+  </div>
+
+  <p>Three properties matter and are all one-line proofs in Appendix A.2:</p>
+  <ul>
+    <li><strong>Bounded (Prop. 1):</strong> <code>|Ã_k − A_seq| ≤ λb|A_seq|</code>. At the paper's settings that's ±10%. This is a nudge, not a rewrite.</li>
+    <li><strong>Sign-preserving (Prop. 2):</strong> the multiplier <code>(1−λ)+λw_k ≥ 1−λb &gt; 0</code>, strictly positive. <strong>The belief signal can never reverse GRPO's update direction.</strong> The verifier owns the direction; belief only owns the magnitude. This is what makes the method safe to bolt on.</li>
+    <li><strong>Recovers GRPO (Prop. 3):</strong> at λ=0 the gradient is identical to GRPO's. λ is a clean interpolation knob.</li>
+  </ul>
+
+  <div class="note">
+    <strong>Where this sits relative to PPO.</strong> The authors put it plainly in §4.3: the belief state <code>B</code> plays the role of GAE's value baseline, and its per-turn revision <code>ΔB</code> plays the role of the TD signal — but with no learned value network, no reward model, and no extra rollouts. That's the trade they're proposing.
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+<div class="col">
+  <h2><span class="tag">Worked example</span>One ALFWorld episode, end to end</h2>
+  <p class="lede">Task category <em>Pick Clean then Place</em>. The agent is dropped in a kitchen and told: <strong>put a clean mug in coffeemachine</strong>. Below is a plausible eight-turn success, then the exact arithmetic AgentOPSD runs on it.</p>
+
+  <p>The prompt template (Appendix H, Figure 6) hands the model the task description, an empty <code>{skill context}</code> slot, the recent action history, the current observation, and the list of admissible actions. It must emit reasoning inside <code>&lt;think&gt;</code> tags and one admissible action inside <code>&lt;action&gt;</code> tags.</p>
+
+  <div class="transcript">
+    <div class="head">Rollout · student policy, no skill in context, temperature 1.0</div>
+    <div class="rows">
+      <div class="trow"><span class="tn">s₁</span><span><span class="obs">You are in the middle of a room. Looking quickly around you, you see a cabinet 6 … cabinet 1, a coffeemachine 1, a countertop 3 … a sinkbasin 1, a stoveburner 4 … a toaster 1.</span></span></div>
+      <div class="trow"><span class="tn">1</span><span><span class="act">go to countertop 1</span><span class="obs">On the countertop 1, you see a butterknife 1, a knife 1, and a soapbottle 1.</span></span></div>
+      <div class="trow"><span class="tn">2</span><span><span class="act">go to cabinet 1</span><span class="obs">The cabinet 1 is closed.</span></span></div>
+      <div class="trow"><span class="tn">3</span><span><span class="act">open cabinet 1</span><span class="obs">You open the cabinet 1. In it, you see a mug 2, and a peppershaker 1.</span></span></div>
+      <div class="trow"><span class="tn">4</span><span><span class="act">take mug 2 from cabinet 1</span><span class="obs">You pick up the mug 2 from the cabinet 1.</span></span></div>
+      <div class="trow"><span class="tn">5</span><span><span class="act">go to sinkbasin 1</span><span class="obs">On the sinkbasin 1, you see a spoon 2.</span></span></div>
+      <div class="trow"><span class="tn">6</span><span><span class="act">clean mug 2 with sinkbasin 1</span><span class="obs">You clean the mug 2 using the sinkbasin 1.</span></span></div>
+      <div class="trow"><span class="tn">7</span><span><span class="act">go to coffeemachine 1</span><span class="obs">On the coffeemachine 1, you see nothing.</span></span></div>
+      <div class="trow"><span class="tn">8</span><span><span class="act">put mug 2 in/on coffeemachine 1</span><span class="obs">You put the mug 2 in/on the coffeemachine 1. &nbsp;→ &nbsp;<strong style="color:var(--up)">R(τ) = 1</strong></span></span></div>
+    </div>
+  </div>
+
+  <p>GRPO stops here. Suppose 5 of the 8 group trajectories succeeded, so <code>R̄ = 0.625</code>, <code>σ_R = 0.484</code>, and this trajectory gets <code>A_seq = (1 − 0.625)/0.484 = +0.775</code> — <em>applied identically to turn 1 and turn 6</em>. Turn 1 was a dead end. Turn 6 is the subgoal that defines the entire task category. Same number.</p>
+
+  <h3>The teacher forward pass</h3>
+  <p>AgentOPSD now runs the same model once more over the same tokens, with the retrieved skill prepended:</p>
+
+  <div class="skillbox">
+    <div class="label">c⁺ · retrieved from SkillBank by keyword match · training only</div>
+    Clean-then-place: (1) locate the object — closed receptacles must be opened before their contents are visible; (2) take the object; (3) go to sinkbasin 1 and issue `clean &lt;obj&gt; with sinkbasin 1`; (4) go to the target receptacle and put the object.
+  </div>
+
+  <p>For every generated token, <code>δ_k,t = log π(y | s_k, c⁺, y_&lt;t) − log π(y | s_k, y_&lt;t)</code>. Sum within each turn to get <code>e_k</code>. Turn 1 comes out negative — the skill-conditioned branch would not have wandered to the countertop. Turn 4 comes out strongly positive — "take the object" is the skill's crux and the student nailed it.</p>
+
+  <!-- ===================== THE MACHINE ===================== -->
+  <div class="machine">
+    <div class="controls">
+      <div class="ctrl">
+        <label for="lam">λ reshaping <b id="lamv">0.50</b></label>
+        <input type="range" id="lam" min="0" max="1" step="0.01" value="0.5">
+      </div>
+      <div class="ctrl">
+        <label for="gam">γ decay <b id="gamv">0.95</b></label>
+        <input type="range" id="gam" min="0.5" max="1" step="0.01" value="0.95">
+      </div>
+      <div class="ctrl">
+        <label for="bnd">b band <b id="bndv">0.20</b></label>
+        <input type="range" id="bnd" min="0.05" max="0.6" step="0.01" value="0.2">
+      </div>
+      <div class="ctrl">
+        <label for="succ">group successes <b id="succv">5 / 8</b></label>
+        <input type="range" id="succ" min="1" max="7" step="1" value="5">
+      </div>
+      <div class="ctrl">
+        <label>this trajectory</label>
+        <div class="seg" role="group" aria-label="episode outcome">
+          <button type="button" id="btnWin" aria-pressed="true">R = 1</button>
+          <button type="button" id="btnLose" aria-pressed="false">R = 0</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="readout">
+      <span>B₀ = R̄<b id="ro-b0">0.625</b></span>
+      <span>logit B₀<b id="ro-l0">0.511</b></span>
+      <span>A_seq<b id="ro-a">+0.775</b></span>
+      <span>final B_K<b id="ro-bk">0.980</b></span>
+      <span>Σ ΔB_k = B_K − B₀<b id="ro-sum">0.355</b></span>
+      <span>Ã spread<b id="ro-spread">0.697 → 0.852</b></span>
+    </div>
+
+    <p class="charttitle">Belief trace · B_k across turns, dashed line = prior B₀</p>
+    <svg id="beliefchart" viewBox="0 0 720 230" role="img" aria-label="Belief state across the eight turns of the episode"></svg>
+
+    <p class="charttitle">Per-turn advantage · bars = Ã_k, dashed line = what GRPO would have given every turn</p>
+    <svg id="advchart" viewBox="0 0 720 170" role="img" aria-label="Reshaped per-turn advantage compared with the flat GRPO advantage"></svg>
+
+    <p class="charttitle">The ledger · edit any e_k to see the recursion propagate</p>
+    <div class="scroller">
+      <table id="ledger">
+        <thead>
+          <tr>
+            <th>turn</th><th>action</th><th>e_k</th><th>c_k</th><th>ℓ_k</th><th>B_k</th>
+            <th>ΔB_k</th><th>q_k</th><th>z_k</th><th>w_k</th><th>Ã_k</th><th>vs GRPO</th>
+          </tr>
+        </thead>
+        <tbody id="ledgerbody"></tbody>
+        <caption>The <code>e_k</code> column is editable and everything to its right recomputes. Values shown are illustrative — the paper reports mean per-token gaps around −0.05 to −0.2 (Figure 4), so a turn of 50–100 tokens plausibly lands in the range used here.</caption>
+      </table>
+    </div>
+  </div>
+
+  <h3>Every column, decoded</h3>
+  <p>Left to right, the ledger is one pipeline: raw evidence → belief → credit → advantage. Each term is defined only in reference to the one before it.</p>
+
+  <div class="scroller">
+  <table class="gloss">
+    <thead>
+      <tr><th>Term</th><th>Formula</th><th>Range</th><th>What it represents</th><th>Depends on</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sym"><b>e_k</b><span>turn evidence</span></td>
+        <td class="frm">Σ_t δ_k,t<br>= log π(a_k|s_k,c⁺)<br>&nbsp;&nbsp;− log π(a_k|s_k)</td>
+        <td class="rng">ℝ, unbounded<br>(scales with turn length)</td>
+        <td class="what">How much more — or less — likely the skill-conditioned branch found <em>this exact action</em>. Signed: positive means characteristic of skilled behaviour. Units are log-odds.</td>
+        <td class="dep">The teacher forward pass. <strong>The only term computed by the model</strong> — everything after is arithmetic.</td>
+      </tr>
+      <tr>
+        <td class="sym"><b>c_k</b><span>accumulated evidence</span></td>
+        <td class="frm">γ·c_{k−1} + e_k<br>= Σ_{j≤k} γ^{k−j} e_j</td>
+        <td class="rng">ℝ, bounded near ē/(1−γ) under sustained evidence</td>
+        <td class="what">Running total of all evidence so far, older turns geometrically faded. At γ=0.95, evidence from 30 turns back retains about 21% of its weight. <strong>This is the memory of the recursion.</strong></td>
+        <td class="dep">e_k plus its own history. First term that is not turn-local.</td>
+      </tr>
+      <tr>
+        <td class="sym"><b>ℓ_k</b><span>log-odds belief</span></td>
+        <td class="frm">logit(B₀) + c_k<br>B₀ = clip(R̄, ε, 1−ε)</td>
+        <td class="rng">ℝ</td>
+        <td class="what">Prior plus evidence, in the space where <strong>evidence adds linearly</strong> — that additivity is the whole reason the recursion lives here rather than in probability space. The prior term never decays; only c_k does.</td>
+        <td class="dep">c_k and <strong>R̄</strong>, the group success rate — shared by all G trajectories, including the failures.</td>
+      </tr>
+      <tr>
+        <td class="sym"><b>B_k</b><span>belief state</span></td>
+        <td class="frm">σ(ℓ_k)</td>
+        <td class="rng">(0, 1)</td>
+        <td class="what">Support for "this trajectory ends in success," given history through turn k. Reads like a probability but is not a calibrated one — Appendix A.1's ρ→0 condition fails in the operating regime. Treat it as relative support.</td>
+        <td class="dep">ℓ_k</td>
+      </tr>
+      <tr class="pivot">
+        <td class="sym"><b>ΔB_k</b><span>belief revision</span></td>
+        <td class="frm">B_k − B_{k−1}<br>≈ B_{k−1}(1−B_{k−1})<br>&nbsp;&nbsp;·[e_k − (1−γ)c_{k−1}]</td>
+        <td class="rng">(−1, 1)<br>telescopes exactly:<br>Σ_k ΔB_k = B_K − B₀</td>
+        <td class="what"><strong>The contribution of the paper.</strong> Not "was this turn good" but "how much did it <em>move</em> the belief." Two things suppress it: the gate B(1−B) ∈ (0, 0.25] collapses once belief commits, and the carry-over (1−γ)c_{k−1} subtracts evidence already counted.</td>
+        <td class="dep">B_k and B_{k−1}. The first-order form is a reading aid — the code computes the exact difference, and the approximation overshoots by ~35% on large-revision turns.</td>
+      </tr>
+      <tr>
+        <td class="sym"><b>q_k</b><span>aligned credit</span></td>
+        <td class="frm">sign(A_seq)·ΔB_k</td>
+        <td class="rng">same as ΔB_k</td>
+        <td class="what">Cross-references the revision against <strong>what actually happened</strong>. In a success, upward revisions are the ones worth amplifying. In a failure the sign flips, so the turns that dragged support down become the amplified ones instead.</td>
+        <td class="dep">ΔB_k and <strong>A_seq</strong>. This is where the teacher channel and the verifier channel first meet.</td>
+      </tr>
+      <tr>
+        <td class="sym"><b>z_k</b><span>standardized credit</span></td>
+        <td class="frm">(q_k − μ_q)/(σ_q + ε)<br>μ, σ over this trajectory's K turns only</td>
+        <td class="rng">ℝ, mean 0 by construction</td>
+        <td class="what">Converts absolute credit into "above or below average <em>for this episode</em>." Mean-zero is what makes the reshaping a <strong>redistribution</strong> of advantage across turns rather than a net boost.</td>
+        <td class="dep">All q_j in trajectory i. Needs the whole trajectory, so the ledger is two passes, not one.</td>
+      </tr>
+      <tr>
+        <td class="sym"><b>w_k</b><span>bounded multiplier</span></td>
+        <td class="frm">clip(1 + b·z_k, 1−b, 1+b)<br>b = 0.2</td>
+        <td class="rng"><strong>[0.8, 1.2]</strong><br>strictly positive</td>
+        <td class="what">The dial. Strict positivity is Prop. 2 — <strong>the belief signal can never reverse GRPO's update direction.</strong> The verifier owns the sign; the teacher owns only the magnitude.</td>
+        <td class="dep">z_k and the band b.</td>
+      </tr>
+      <tr>
+        <td class="sym"><b>Ã_k</b><span>reshaped advantage</span></td>
+        <td class="frm">A_seq·[(1−λ) + λ·w_k]<br>λ = 0.5</td>
+        <td class="rng">|Ã_k − A_seq| ≤ λb·|A_seq|<br>= ±10% at these settings</td>
+        <td class="what">What every token in turn k actually carries into the PPO gradient. At λ=0 it collapses to A_seq identically and the gradient equals GRPO's (Prop. 3), which makes λ a clean interpolation knob.</td>
+        <td class="dep">w_k, A_seq, λ.</td>
+      </tr>
+    </tbody>
+    <caption>Bounds cited are Props. 1–3 and 5 of Appendix A.2. The highlighted row is the one that distinguishes AgentOPSD from every step-level baseline.</caption>
+  </table>
+  </div>
+
+  <h3>The two channels, and where they meet</h3>
+  <div class="channel">
+<pre><span class="j">VERIFIER</span>        R⁽ⁱ⁾ ──┬── <span class="j">A_seq</span> ──────────────────────────┐
+                       │                                  │
+                       └── <span class="j">R̄</span> ──→ logit(B₀) ──┐         │
+                                                ↓         ↓
+<span class="t">TEACHER</span>   <span class="v">e_k</span> → <span class="v">c_k</span> → <span class="v">ℓ_k</span> → <span class="v">B_k</span> → <span class="v">ΔB_k</span> → <span class="v">q_k</span> → <span class="v">z_k</span> → <span class="v">w_k</span> → <span class="v">Ã_k</span>
+                                          ↑                 ↑
+                                    <span class="j">sign(A_seq)</span>       <span class="j">A_seq</span></pre>
+    <div class="chlegend">
+      <span><b style="color:#FFC46B">▪</b> verifier-derived — owns sign and scale</span>
+      <span><b style="color:#7FE3CF">▪</b> teacher-derived — owns magnitude only, within ±10%</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>R̄ enters twice, and the paper doesn't discuss it.</strong> The group success rate sets both the belief's starting point <em>and</em> the advantage scale. So a hard task hands you a low <code>B₀</code> — which sits in the high-sensitivity region of the <code>B(1−B)</code> gate, making early revisions large — <em>and</em> a large <code>|A_seq|</code> for whichever trajectories succeed. The two effects compound rather than being independent knobs. Drag the group-successes slider above and watch the Ã spread and the belief trace move together.
+  </div>
+
+  <h3>Reading the ledger</h3>
+  <ul>
+    <li><strong>Turn 1 is the only turn punished.</strong> Its <code>ΔB</code> is negative, it standardizes to about z = −2.08, the multiplier clips hard to the floor <code>1−b = 0.8</code>, and it ends up at roughly 0.70 against GRPO's flat 0.775. Still positive — Prop. 2 guarantees the sign can't flip — but visibly the weakest push in a successful episode.</li>
+    <li><strong>Turn 4 is the pivot.</strong> Belief was sitting near 0.64, squarely in the high-sensitivity region of the <code>B(1−B)</code> gate, and <code>e₄ = +1.4</code> pushes it to 0.88. That's a <code>ΔB</code> of +0.24, z ≈ +1.67, multiplier clipped to the ceiling <code>1+b = 1.2</code>, top advantage.</li>
+    <li><strong>Turns 7 and 8 get almost nothing — and that is on purpose.</strong> By turn 7 belief has saturated above 0.97, so <code>B(1−B) ≈ 0.026</code> and even real evidence barely moves the state. The paper's own words: the same local gap that is decisive while the outcome is open becomes redundant once the accumulated state already points to an outcome.</li>
+    <li><strong>The increments telescope.</strong> <code>Σ ΔB_k = B_K − B₀</code> exactly (Prop. 5). Check it in the readout above.</li>
+  </ul>
+
+  <div class="note warn">
+    <strong>Flip the toggle to R = 0 and watch what Eq. 10 does.</strong> The belief trace is identical — same evidence — but <code>A_seq</code> goes negative and <code>q_k = sign(A_seq)·ΔB_k</code> inverts the ranking. Turn 1, the only turn that lowered belief, becomes the <em>most</em> strongly penalized. In a failure, the turns that dragged support down are the ones you most want to push away from. (Contrived, of course: a genuinely failed episode would have produced different <code>e_k</code> in the first place. It isolates the mechanism, not the data.)
+  </div>
+
+  <div class="note">
+    <strong>The saturation problem this example makes visible.</strong> ALFWorld allows up to 50 turns. Eight turns of mostly-positive evidence already saturate the belief. Because <code>c_k</code> converges to roughly <code>e/(1−γ) ≈ 20e</code> under sustained evidence, and the increment is <code>e_k − (1−γ)c_{k−1}</code>, the decay does bound the accumulator — but at a level well past saturation. In a 40-turn episode the last 30 turns would all sit near <code>ΔB ≈ 0</code>, standardize to below-average, and get downweighted toward 0.8×. The paper's horizon-robustness result (−0.54 pts/turn) says this empirically doesn't hurt; the mechanism doesn't obviously explain why. Slide γ down to 0.8 above and watch the trace stop pinning.
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+<div class="col">
+  <h2><span class="tag">Pipeline</span>What actually runs, per training step</h2>
+  <p class="lede">Reconstructed from Algorithm 1 (Appendix B) and Tables 3–4. The only additions over vanilla GRPO are step 4 and step 6.</p>
+
+  <ol class="pipe">
+    <li>
+      <h3>Sample a batch of tasks</h3>
+      <p>ALFWorld and WebShop use train batch size 16; Search-QA uses 128. 150 training steps total for every environment.</p>
+    </li>
+    <li>
+      <h3>Retrieve the privileged skill c⁺</h3>
+      <p>Keyword matching against the SkillBank from SkillRL. One skill per task. Training-only — it never enters the rollout prompt and never enters evaluation.</p>
+      <p class="kv">SRS = KM (keyword matching)</p>
+    </li>
+    <li>
+      <h3>Roll out G = 8 trajectories, on-policy, unconditioned</h3>
+      <p>The student generates <em>without</em> the skill. This is the fork from Skill-GRPO, which injects the skill into the training prompt instead. Each turn: prompt → <code>&lt;think&gt;</code> + <code>&lt;action&gt;</code> → environment observation → repeat.</p>
+      <p class="kv">ALFWorld: ≤50 turns · prompt ≤2048 tok · response ≤512 tok · temp 1.0<br>WebShop: ≤15 turns · prompt ≤4096 · Search-QA: ≤4 turns · prompt ≤4096</p>
+    </li>
+    <li>
+      <h3>Verify, then compute the group-relative advantage</h3>
+      <p>Binary <code>R⁽ⁱ⁾ ∈ {0,1}</code> from the environment verifier. Standardize within the group of 8 to get <code>A_seq⁽ⁱ⁾</code>. The group mean <code>R̄</code> is retained — it becomes <code>B₀</code>.</p>
+    </li>
+    <li>
+      <h3>One teacher forward pass per trajectory</h3>
+      <p>Re-score the student's own tokens with <code>c⁺</code> prepended. Teacher-forced, no sampling. Subtract from the rollout log-probs to get <code>δ_k,t</code>, sum within each turn to get <code>e_k</code>. All of it under stop-gradient.</p>
+      <p class="kv">This is the entire compute overhead: one forward pass. No extra rollouts, no critic, no learned parameters.</p>
+    </li>
+    <li>
+      <h3>Run the recursion and reshape</h3>
+      <p><code>B₀ = clip(R̄, ε, 1−ε)</code> → <code>c_k = γc_{k−1} + e_k</code> → <code>B_k = σ(logit B₀ + c_k)</code> → <code>ΔB_k</code> → <code>q_k = sign(A_seq)ΔB_k</code> → standardize within trajectory → <code>w_k = clip(1 + bz_k, 1±b)</code> → <code>Ã_k = A_seq[(1−λ) + λw_k]</code>. Elementwise, negligible cost.</p>
+      <p class="kv">λ = 0.5 · b = 0.2 · γ = 0.95 · ε = 1e−4 · shared across all environments and both model scales, no per-task tuning</p>
+    </li>
+    <li>
+      <h3>Policy update</h3>
+      <p>Standard clipped PPO surrogate, each token carrying its turn's <code>Ã</code>. <strong>There is no separate distillation loss.</strong> The teacher signal only ever acts through the advantage — that's the design choice separating this from SDAR and Skill-SD, which add auxiliary objectives.</p>
+      <p class="kv">η = 1e−6 · ε_low/ε_high = 0.2/0.24 (clip-higher) · dual-clip c = 3.0 · KL β = 0.01 · entropy 0.001 · grad clip 1.0 · 1 PPO epoch/update · FSDP, single node 8×H800</p>
+    </li>
+  </ol>
+
+  <h3>Inference</h3>
+  <p>Everything above disappears. <code>{skill context}</code> in the prompt template is left empty, there is no teacher branch, no belief state, no reshaping. It is a plain multi-turn agent loop against the environment at temperature 0.4. Whatever the skills taught has to have been absorbed into the weights during training — which is exactly the claim Skill-GRPO (skill removed at test) versus Skill-GRPO* (skill kept at test) is set up to measure.</p>
+  <div class="note">
+    Note the asymmetry this creates in Table 1: Skill-GRPO* keeps its privileged context at validation time and still only reaches 88.3 on ALFWorld-7B. AgentOPSD reaches 89.1 with nothing at inference.
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+<div class="col">
+  <h2><span class="tag">Results</span>What the numbers say, and where they don't</h2>
+
+  <h4>ALFWorld · success rate %</h4>
+  <div class="scroller">
+  <table class="results">
+    <thead><tr><th>Method</th><th>3B</th><th>7B</th><th>7B Heat</th><th>7B Pick2</th></tr></thead>
+    <tbody>
+      <tr><td class="name">Vanilla (no post-training)</td><td>21.9</td><td>12.5</td><td class="dim">0.0</td><td class="dim">0.0</td></tr>
+      <tr><td class="name">GRPO</td><td>75.0</td><td>81.2</td><td>81.0</td><td>57.9</td></tr>
+      <tr><td class="name">Skill-GRPO* <span class="dim">(skill at test)</span></td><td>80.5</td><td>88.3</td><td>83.3</td><td>78.9</td></tr>
+      <tr><td class="name">GRPO+OPSD</td><td>81.2</td><td>80.4</td><td>87.5</td><td>52.2</td></tr>
+      <tr><td class="name">RLSD</td><td>79.7</td><td>82.0</td><td>58.8</td><td>65.2</td></tr>
+      <tr><td class="name">Skill-SD</td><td>73.4</td><td>85.1</td><td>100</td><td>68.4</td></tr>
+      <tr><td class="name">SDAR</td><td>84.4</td><td>85.9</td><td>86.7</td><td>78.9</td></tr>
+      <tr><td class="name">StepOPSD</td><td>73.4</td><td>88.4</td><td>90.5</td><td>63.2</td></tr>
+      <tr class="hero"><td class="name">AgentOPSD</td><td>84.4</td><td>89.1</td><td>90.5</td><td>84.2</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>The 7B ALFWorld result is the paper's headline and it is a clean win. The 3B result is a <em>tie</em> with SDAR at 84.4 — worth noticing, because the abstract's "improves over … strong self-distillation baselines" is doing some work. §3.2 is more careful: AgentOPSD beats GRPO+OPSD, Skill-SD and RLSD on all eight aggregate comparisons, but exceeds SDAR on only six of eight.</p>
+
+  <h4>Search-QA (avg accuracy) and WebShop</h4>
+  <div class="scroller">
+  <table class="results">
+    <thead><tr><th>Method</th><th>Search 3B</th><th>Search 7B</th><th>Shop 3B score</th><th>Shop 7B score</th><th>Shop 7B acc</th></tr></thead>
+    <tbody>
+      <tr><td class="name">GRPO</td><td>36.4</td><td>42.0</td><td>79.8</td><td>80.9</td><td>72.6</td></tr>
+      <tr><td class="name">RLSD</td><td>43.8</td><td>49.0</td><td>84.4</td><td>87.4</td><td>77.3</td></tr>
+      <tr><td class="name">SDAR</td><td>43.4</td><td>49.0</td><td>85.0</td><td>89.4</td><td><strong>82.8</strong></td></tr>
+      <tr><td class="name">StepOPSD</td><td>43.7</td><td>48.2</td><td>82.4</td><td>87.2</td><td>78.1</td></tr>
+      <tr class="hero"><td class="name">AgentOPSD</td><td>46.7</td><td>49.2</td><td>90.4</td><td>90.2</td><td>79.7</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Not a sweep. On WebShop-7B exact-completion accuracy, SDAR beats AgentOPSD by 3.1 points. On Search-QA-7B the margin over SDAR and RLSD is 0.2 points, which is noise-sized — and Search-QA caps at 4 turns, so it is precisely the regime where a method built for long-horizon credit shouldn't be expected to help.</p>
+
+  <h4>Horizon robustness · ALFWorld-7B, success points lost per extra turn</h4>
+  <div id="slopes"></div>
+  <p style="margin-top:1rem">This is the most persuasive figure in the paper, because it tests the actual mechanism rather than just the score. If turn-level credit is what's helping, the benefit should grow with horizon — and it does, dramatically. AgentOPSD's degradation is a fifth of GRPO's.</p>
+
+  <h4>Component ablation · ALFWorld-7B, one change at a time</h4>
+  <div class="scroller">
+  <table class="results">
+    <thead><tr><th>Configuration</th><th>%</th><th>Δ</th></tr></thead>
+    <tbody>
+      <tr class="hero"><td class="name">Full method — turn-level, bounded, λ=0.5</td><td>89.1</td><td>—</td></tr>
+      <tr><td class="name">Per-token accumulation instead of turn-level</td><td>85.9</td><td class="neg">−3.2</td></tr>
+      <tr><td class="name">Raw local gap e_k instead of ΔB_k</td><td>82.8</td><td class="neg">−6.3</td></tr>
+      <tr><td class="name">Magnitude |ΔB_k| only, drop the outcome sign</td><td>80.5</td><td class="neg">−8.6</td></tr>
+      <tr><td class="name">Drop the empirical-rate prior B₀</td><td>78.9</td><td class="neg">−10.2</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Row 3 is the paper's central claim tested directly: swap the recursive revision for the isolated local gap, hold everything else fixed, lose 6.3 points. That's the difference between AgentOPSD and StepOPSD reduced to a controlled comparison — and it is the cleanest evidence that "a local gap is not sequential credit" is more than a slogan.</p>
+  <p>Rows 4 and 5 are larger, but they're arguably testing more basic things. Losing the sign means credit no longer knows which way the episode went. Losing <code>B₀</code> means every trajectory starts from an arbitrary point on the sigmoid, mis-scaling the <code>B(1−B)</code> gate for every early turn. Both are load-bearing, neither is the novelty.</p>
+
+  <h4>Hyperparameter sensitivity</h4>
+  <p>Only λ has a systematic effect: 0.5 is best and every smaller value is worse (89.1 vs 84.4 / 85.9 / 83.6). γ moves results a few points with no monotone trend. ε_high is essentially inert — the reshaped objective inherits GRPO's trust-region robustness, as Prop. 2 would predict. Notably the entire spread collapses on 4-turn Search-QA, which is the method's own consistency check: the knobs that matter on long horizons go quiet when there's no history to accumulate.</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section>
+<div class="col">
+  <h2><span class="tag">Judgment</span>What I'd want before I built on this</h2>
+
+  <h3>The genuinely good parts</h3>
+  <ul>
+    <li>The core reframe is right and cheaply stated: credit is belief revision, belief revision is recursive, and log-odds is the space where evidence adds. The connection from Bayes factor → sequential probability ratio test → sigmoid-gated TD-like signal is elegant and the propositions are honest one-liners rather than dressing.</li>
+    <li>Sign preservation (Prop. 2) is the right engineering decision. The verifier keeps the direction, the belief only modulates magnitude within ±λb. It cannot manufacture positive signal on a failed episode. That makes it a safe add-on to any group-relative method.</li>
+    <li>The horizon-slope experiment tests the mechanism, not just the leaderboard. More papers should do this.</li>
+    <li>One shared hyperparameter setting across three environments and two model scales, with the sweep published. No per-task tuning.</li>
+  </ul>
+
+  <h3>The parts I'd push on</h3>
+  <ul>
+    <li><strong>No code.</strong> The repo is a README. For a method whose contribution is entirely in the shape of an advantage-reshaping block, the implementation <em>is</em> the paper. Algorithm 1 is detailed enough to reimplement, but nothing is verified.</li>
+    <li><strong>No seeds, no error bars, anywhere in Table 1.</strong> Several per-category cells are computed over what look like fewer than 25 episodes (100.0 and 0.0 appear repeatedly). The 0.2-point Search-QA-7B margin cannot be distinguished from noise without variance.</li>
+    <li><strong>Assumption A2 is violated in the operating regime.</strong> The Bayes-factor derivation needs success to be rare. On ALFWorld-7B late in training, <code>R̄</code> is high. The authors retreat to sign-and-ranking, which is defensible — but it means the "Bayesian belief state" is a heuristic accumulator wearing probabilistic clothing, and <code>B_k</code> should not be read as a success probability. They say as much; the framing elsewhere is looser than the caveat.</li>
+    <li><strong>Saturation on long horizons is unaddressed.</strong> The <code>B(1−B)</code> gate zeroes out credit once support settles, which on 50-turn ALFWorld episodes means most turns end up indistinguishable and slightly downweighted. γ bounds the accumulator but not below saturation. There is no analysis of what fraction of turns actually receive non-trivial credit.</li>
+    <li><strong>Provenance smell.</strong> Figures 4 and 5 are titled "…over training (SABRE)" — a different method name, left in. And "AgentOPSD" is expanded in the title as "Recursive Self-Distillation," which doesn't decompose the acronym at all (OPSD = on-policy self-distillation). Cosmetic, but it suggests a rushed rename over an earlier draft, which is worth knowing when you're weighing how carefully the rest was checked.</li>
+    <li><strong>The history is truncated.</strong> The ALFWorld prompt template feeds only the most recent <code>{history length}</code> observations. So <code>s_k</code> in the derivation — nominally the full interaction history — is in practice a window. The recursion partly compensates by carrying evidence forward outside the context, which is arguably a feature, but it's not discussed.</li>
+    <li><strong>Untested against reward-side credit.</strong> §4.1 correctly positions GiGPO as complementary (environment rewards vs. distillation evidence) but never runs the combination, or compares head-to-head on the same setup. That's the obvious next experiment.</li>
+  </ul>
+
+  <h3>If you're reproducing it</h3>
+  <p>The reshaping block is maybe forty lines and drops into any GRPO trainer that already tracks turn boundaries. The order that matters: sum <code>δ</code> within a turn <em>before</em> anything else; initialize <code>ℓ₀</code> from the group mean you already have; apply <code>sign(A_seq)</code> <em>before</em> standardizing, not after; standardize within each trajectory separately, not across the group. Getting the standardization scope wrong is the failure mode that will silently look almost right.</p>
+</div>
+</section>
+
+<footer>
+  <div class="col">
+    Walkthrough of arXiv:2608.05987v1, read 24 Aug 2026. Numbers in the interactive example are illustrative and constructed for teaching; the trajectory, skill text and per-turn gaps are not from the paper, though every equation, constant and reported result is. Code repository checked and confirmed to contain no source at time of writing.
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var TURNS = [
+    {a:"go to countertop 1",            e:-0.8},
+    {a:"go to cabinet 1",               e: 0.3},
+    {a:"open cabinet 1",                e: 0.5},
+    {a:"take mug 2 from cabinet 1",     e: 1.4},
+    {a:"go to sinkbasin 1",             e: 0.6},
+    {a:"clean mug 2 with sinkbasin 1",  e: 1.2},
+    {a:"go to coffeemachine 1",         e: 0.2},
+    {a:"put mug 2 in/on coffeemachine 1", e:0.4}
+  ];
+
+  var S = {lam:0.5, gam:0.95, b:0.2, succ:5, G:8, win:true};
+  var EPS = 1e-4;
+
+  function sig(x){ return 1/(1+Math.exp(-x)); }
+  function logit(p){ return Math.log(p/(1-p)); }
+  function f(x,n){ return (x>=0?"":"") + x.toFixed(n===undefined?3:n); }
+  function sgn(x){ return x>0?1:(x<0?-1:0); }
+
+  function compute(){
+    var Rbar = S.succ / S.G;
+    var B0 = Math.min(Math.max(Rbar, EPS), 1-EPS);
+    var l0 = logit(B0);
+    var sd = Math.sqrt(Rbar*(1-Rbar));
+    var R  = S.win ? 1 : 0;
+    var Aseq = (R - Rbar) / (sd + 1e-6);
+
+    var rows = [], c = 0, Bprev = B0;
+    for (var k=0;k<TURNS.length;k++){
+      var e = TURNS[k].e;
+      c = S.gam*c + e;
+      var l = l0 + c;
+      var B = sig(l);
+      var dB = B - Bprev;
+      rows.push({a:TURNS[k].a, e:e, c:c, l:l, B:B, dB:dB, q:sgn(Aseq)*dB});
+      Bprev = B;
+    }
+
+    var n = rows.length, mu = 0;
+    for (var i=0;i<n;i++) mu += rows[i].q; mu /= n;
+    var vv = 0;
+    for (i=0;i<n;i++) vv += (rows[i].q-mu)*(rows[i].q-mu); vv /= n;
+    var sq = Math.sqrt(vv);
+
+    for (i=0;i<n;i++){
+      var z = (rows[i].q - mu) / (sq + EPS);
+      var w = Math.min(Math.max(1 + S.b*z, 1-S.b), 1+S.b);
+      rows[i].z = z;
+      rows[i].w = w;
+      rows[i].A = Aseq * ((1-S.lam) + S.lam*w);
+      rows[i].clipped = Math.abs(1 + S.b*z - w) > 1e-9;
+    }
+    return {rows:rows, B0:B0, l0:l0, Aseq:Aseq, Rbar:Rbar, BK:rows[n-1].B};
+  }
+
+  /* ---------- ledger ---------- */
+  function renderLedger(m){
+    var tb = document.getElementById("ledgerbody");
+    var html = "";
+    for (var i=0;i<m.rows.length;i++){
+      var r = m.rows[i];
+      var cls = r.dB >= 0 ? "pos" : "neg";
+      var delta = r.A - m.Aseq;
+      var dcls = Math.abs(delta) < 1e-6 ? "dim" : (delta > 0 ? "pos" : "neg");
+      html += '<tr>'
+        + '<td class="dim">'+(i+1)+'</td>'
+        + '<td style="font-size:.73rem">'+r.a+'</td>'
+        + '<td class="evcell"><input type="number" step="0.1" data-i="'+i+'" value="'+r.e.toFixed(1)+'"></td>'
+        + '<td class="dim">'+f(r.c)+'</td>'
+        + '<td class="dim">'+f(r.l)+'</td>'
+        + '<td>'+r.B.toFixed(4)+'</td>'
+        + '<td class="'+cls+'">'+(r.dB>=0?"+":"")+r.dB.toFixed(4)+'</td>'
+        + '<td class="'+(r.q>=0?"pos":"neg")+'">'+(r.q>=0?"+":"")+r.q.toFixed(4)+'</td>'
+        + '<td class="dim">'+(r.z>=0?"+":"")+r.z.toFixed(2)+'</td>'
+        + '<td><span class="pill '+(r.w>=1?"up":"dn")+'">'+r.w.toFixed(3)+(r.clipped?"*":"")+'</span></td>'
+        + '<td>'+(r.A>=0?"+":"")+r.A.toFixed(3)+'</td>'
+        + '<td class="'+dcls+'">'+(delta>=0?"+":"")+delta.toFixed(3)+'</td>'
+        + '</tr>';
+    }
+    tb.innerHTML = html;
+    var ins = tb.querySelectorAll("input");
+    for (var j=0;j<ins.length;j++){
+      ins[j].addEventListener("input", function(ev){
+        var v = parseFloat(ev.target.value);
+        if (!isNaN(v)) { TURNS[parseInt(ev.target.dataset.i,10)].e = v; refresh(true); }
+      });
+    }
+  }
+
+  /* ---------- belief chart ---------- */
+  function renderBelief(m){
+    var W=720,H=230, L=48,Rr=16,T=16,Bm=34;
+    var n=m.rows.length;
+    var x = function(k){ return L + (W-L-Rr) * (k/n); };
+    var y = function(v){ return T + (H-T-Bm) * (1-v); };
+    var s='';
+    // grid
+    var ticks=[0,0.25,0.5,0.75,1];
+    for (var t=0;t<ticks.length;t++){
+      s += '<line x1="'+L+'" y1="'+y(ticks[t])+'" x2="'+(W-Rr)+'" y2="'+y(ticks[t])+'" stroke="var(--rule)" stroke-width="1"/>';
+      s += '<text x="'+(L-8)+'" y="'+(y(ticks[t])+3.5)+'" text-anchor="end" font-family="var(--mono)" font-size="9" fill="var(--ink-faint)">'+ticks[t].toFixed(2)+'</text>';
+    }
+    // prior line
+    s += '<line x1="'+L+'" y1="'+y(m.B0)+'" x2="'+(W-Rr)+'" y2="'+y(m.B0)+'" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="5 4" opacity=".75"/>';
+    s += '<text x="'+(W-Rr)+'" y="'+(y(m.B0)-6)+'" text-anchor="end" font-family="var(--mono)" font-size="9" fill="var(--accent)">B₀ = '+m.B0.toFixed(3)+'</text>';
+
+    // segments
+    var px=x(0), py=y(m.B0);
+    for (var k=0;k<n;k++){
+      var cx=x(k+1), cy=y(m.rows[k].B);
+      var col = m.rows[k].dB>=0 ? "var(--up)" : "var(--down)";
+      s += '<line x1="'+px+'" y1="'+py+'" x2="'+cx+'" y2="'+cy+'" stroke="'+col+'" stroke-width="2.4" stroke-linecap="round"/>';
+      // delta magnitude bar
+      var mag = Math.abs(m.rows[k].dB);
+      var bh = mag*(H-T-Bm);
+      s += '<rect x="'+(cx-9)+'" y="'+(H-Bm-bh)+'" width="18" height="'+Math.max(bh,0.5)+'" fill="'+col+'" opacity=".14"/>';
+      s += '<circle cx="'+cx+'" cy="'+cy+'" r="4.2" fill="'+col+'"/>';
+      s += '<text x="'+cx+'" y="'+(H-Bm+15)+'" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ink-faint)">'+(k+1)+'</text>';
+      s += '<text x="'+cx+'" y="'+(cy-11)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="'+col+'">'+(m.rows[k].dB>=0?"+":"")+m.rows[k].dB.toFixed(3)+'</text>';
+      px=cx; py=cy;
+    }
+    s += '<circle cx="'+x(0)+'" cy="'+y(m.B0)+'" r="3.4" fill="var(--accent)"/>';
+    s += '<text x="'+x(0)+'" y="'+(H-Bm+15)+'" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ink-faint)">0</text>';
+    s += '<text x="'+(W/2)+'" y="'+(H-4)+'" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="var(--ink-faint)" letter-spacing="1.4">TURN</text>';
+    document.getElementById("beliefchart").innerHTML = s;
+  }
+
+  /* ---------- advantage chart ---------- */
+  function renderAdv(m){
+    var W=720,H=170,L=48,Rr=16,T=16,Bm=30;
+    var n=m.rows.length;
+    var vals=[m.Aseq];
+    for (var i=0;i<n;i++) vals.push(m.rows[i].A);
+    var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+    lo=Math.min(lo,0); hi=Math.max(hi,0);
+    var pad=(hi-lo)*0.18 || 0.2; lo-=pad; hi+=pad;
+    var y=function(v){ return T+(H-T-Bm)*(1-(v-lo)/(hi-lo)); };
+    var bw=(W-L-Rr)/n;
+    var s='';
+    s += '<line x1="'+L+'" y1="'+y(0)+'" x2="'+(W-Rr)+'" y2="'+y(0)+'" stroke="var(--ink)" stroke-width="1"/>';
+    s += '<text x="'+(L-8)+'" y="'+(y(0)+3.5)+'" text-anchor="end" font-family="var(--mono)" font-size="9" fill="var(--ink-faint)">0</text>';
+    for (i=0;i<n;i++){
+      var v=m.rows[i].A;
+      var cx=L+bw*i+bw/2;
+      var top=Math.min(y(v),y(0)), h=Math.abs(y(v)-y(0));
+      var col = v>=0 ? "var(--up)" : "var(--down)";
+      s += '<rect x="'+(cx-bw*0.3)+'" y="'+top+'" width="'+(bw*0.6)+'" height="'+Math.max(h,1)+'" fill="'+col+'" opacity=".85"/>';
+      s += '<text x="'+cx+'" y="'+(v>=0?y(v)-6:y(v)+13)+'" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="'+col+'">'+v.toFixed(3)+'</text>';
+      s += '<text x="'+cx+'" y="'+(H-Bm+16)+'" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ink-faint)">'+(i+1)+'</text>';
+    }
+    s += '<line x1="'+L+'" y1="'+y(m.Aseq)+'" x2="'+(W-Rr)+'" y2="'+y(m.Aseq)+'" stroke="var(--accent)" stroke-width="1.4" stroke-dasharray="6 4"/>';
+    s += '<text x="'+(W-Rr)+'" y="'+(y(m.Aseq)-6)+'" text-anchor="end" font-family="var(--mono)" font-size="9.5" fill="var(--accent)">GRPO A_seq = '+m.Aseq.toFixed(3)+'</text>';
+    document.getElementById("advchart").innerHTML = s;
+  }
+
+  /* ---------- readout ---------- */
+  function renderReadout(m){
+    var lo=Infinity, hi=-Infinity, sum=0;
+    for (var i=0;i<m.rows.length;i++){
+      lo=Math.min(lo,m.rows[i].A); hi=Math.max(hi,m.rows[i].A); sum+=m.rows[i].dB;
+    }
+    document.getElementById("ro-b0").textContent  = m.B0.toFixed(3);
+    document.getElementById("ro-l0").textContent  = m.l0.toFixed(3);
+    document.getElementById("ro-a").textContent   = (m.Aseq>=0?"+":"")+m.Aseq.toFixed(3);
+    document.getElementById("ro-bk").textContent  = m.BK.toFixed(4);
+    document.getElementById("ro-sum").textContent = (sum>=0?"+":"")+sum.toFixed(4)+"  ("+(m.BK-m.B0>=0?"+":"")+(m.BK-m.B0).toFixed(4)+")";
+    document.getElementById("ro-spread").textContent = lo.toFixed(3)+" → "+hi.toFixed(3);
+  }
+
+  function refresh(skipLedger){
+    var m = compute();
+    if (!skipLedger) renderLedger(m); else patchLedger(m);
+    renderBelief(m); renderAdv(m); renderReadout(m);
+  }
+
+  // keep focus in the edited input: update every cell except the e_k inputs
+  function patchLedger(m){
+    var tb = document.getElementById("ledgerbody");
+    var trs = tb.querySelectorAll("tr");
+    for (var i=0;i<trs.length && i<m.rows.length;i++){
+      var r=m.rows[i], td=trs[i].children, delta=r.A-m.Aseq;
+      td[3].textContent = f(r.c);
+      td[4].textContent = f(r.l);
+      td[5].textContent = r.B.toFixed(4);
+      td[6].textContent = (r.dB>=0?"+":"")+r.dB.toFixed(4); td[6].className = r.dB>=0?"pos":"neg";
+      td[7].textContent = (r.q>=0?"+":"")+r.q.toFixed(4);   td[7].className = r.q>=0?"pos":"neg";
+      td[8].textContent = (r.z>=0?"+":"")+r.z.toFixed(2);
+      td[9].innerHTML   = '<span class="pill '+(r.w>=1?"up":"dn")+'">'+r.w.toFixed(3)+(r.clipped?"*":"")+'</span>';
+      td[10].textContent= (r.A>=0?"+":"")+r.A.toFixed(3);
+      td[11].textContent= (delta>=0?"+":"")+delta.toFixed(3);
+      td[11].className  = Math.abs(delta)<1e-6 ? "dim" : (delta>0?"pos":"neg");
+    }
+  }
+
+  /* ---------- controls ---------- */
+  function bind(id, valId, key, fmt){
+    var el=document.getElementById(id);
+    el.addEventListener("input", function(){
+      S[key]=parseFloat(el.value);
+      document.getElementById(valId).textContent = fmt(S[key]);
+      refresh(true);
+    });
+  }
+  bind("lam","lamv","lam",function(v){return v.toFixed(2);});
+  bind("gam","gamv","gam",function(v){return v.toFixed(2);});
+  bind("bnd","bndv","b",  function(v){return v.toFixed(2);});
+  document.getElementById("succ").addEventListener("input", function(e){
+    S.succ = parseInt(e.target.value,10);
+    document.getElementById("succv").textContent = S.succ+" / 8";
+    refresh(true);
+  });
+  function setOutcome(win){
+    S.win=win;
+    document.getElementById("btnWin").setAttribute("aria-pressed", win?"true":"false");
+    document.getElementById("btnLose").setAttribute("aria-pressed", win?"false":"true");
+    refresh(true);
+  }
+  document.getElementById("btnWin").addEventListener("click",function(){setOutcome(true);});
+  document.getElementById("btnLose").addEventListener("click",function(){setOutcome(false);});
+
+  /* ---------- horizon slope bars ---------- */
+  (function(){
+    var d=[["AgentOPSD",-0.54],["SDAR",-0.87],["GRPO+OPSD",-1.49],["StepOPSD",-1.77],
+           ["Skill-GRPO*",-1.85],["Skill-GRPO",-1.95],["Skill-SD",-2.19],["GRPO",-2.91],["RLSD",-3.59]];
+    var h="";
+    for (var i=0;i<d.length;i++){
+      var pct=(Math.abs(d[i][1])/3.59)*100;
+      h += '<div class="slope"><span class="nm">'+d[i][0]+'</span>'
+         + '<span class="bar'+(i===0?" best":"")+'" style="width:'+(pct*0.62)+'%"></span>'
+         + '<span class="val">'+d[i][1].toFixed(2)+'</span></div>';
+    }
+    document.getElementById("slopes").innerHTML=h;
+  })();
+
+  refresh(false);
+})();
+</script>
+</body>
+</html>

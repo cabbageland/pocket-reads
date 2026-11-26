@@ -519,7 +519,27 @@ h1 {
   min-height: 48px;
 }
 
-.markdown-body { max-width: 860px; }
+.markdown-body { max-width: 860px; min-width: 0; overflow-wrap: anywhere; }
+
+.markdown-body img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.markdown-body table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,.14);
+}
 
 .markdown-body h1,
 .markdown-body h2,

@@ -62,7 +62,7 @@ The common mistake is to collapse three different objects: what the teacher requ
 
 ## The mechanism: supervision is inside a feedback loop
 
-![The paper's Figure 1: teacher requests pass through the student's tangent kernel, alter predictions and prefix visitation, and thereby reshape future supervision.](https://raw.githubusercontent.com/cabbageland/i-read-something/main/assets/method_figures/learning_dynamics_opd_loop.png)
+![The paper's Figure 1: teacher requests pass through the student's tangent kernel, alter predictions and prefix visitation, and thereby reshape future supervision.](https://cabbageland.github.io/pocket-reads/assets/method_figures/learning_dynamics_opd_loop.png)
 
 *Source: Figure 1, PDF page 2, cropped from the original paper. The two failure paths are limited response to requests and substantial but harmful motion into unreliable continuations.*
 
